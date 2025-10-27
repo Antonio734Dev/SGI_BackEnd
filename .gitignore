@@ -57,6 +57,8 @@ src/main/resources/application-mysql.properties
 # Mantener archivos de Docker
 !Dockerfile
 !.dockerignore
+docker-compose.yml
+
 # docker-compose.yml
 
 # Elimina los test logs
