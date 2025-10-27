@@ -24,12 +24,12 @@ public class NoticeRecipient {
 
     @ManyToOne
     @MapsId("noticeId")
-    @JoinColumn(name = "notice_id", columnDefinition = "UUID")
+    @JoinColumn(name = "notice_id", columnDefinition = "BINARY(16)")
     private Notice notice;
 
     @ManyToOne
     @MapsId("userId")
-    @JoinColumn(name = "user_id", columnDefinition = "UUID")
+    @JoinColumn(name = "user_id", columnDefinition = "BINARY(16)")
     private User user;
 
     @Column(name = "read_at")
@@ -41,10 +41,10 @@ public class NoticeRecipient {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class NoticeRecipientId implements Serializable {
-        @Column(columnDefinition = "UUID")
+        @Column(columnDefinition = "BINARY(16)")
         private UUID noticeId;
 
-        @Column(columnDefinition = "UUID")
+        @Column(columnDefinition = "BINARY(16)")
         private UUID userId;
     }
 }

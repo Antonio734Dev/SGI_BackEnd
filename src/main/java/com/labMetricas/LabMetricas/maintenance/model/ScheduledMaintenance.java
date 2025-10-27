@@ -17,15 +17,15 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ScheduledMaintenance {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "UUID")
+    @GeneratedValue(generator = "UUID")
+    @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "frequency_type", nullable = false)
+    @Column(name = "frequency_type", columnDefinition = "ENUM('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY')", nullable = false)
     private FrequencyType frequencyType;
 
-    @Column(name = "frequency_value", columnDefinition = "SMALLINT", nullable = false)
+    @Column(name = "frequency_value", columnDefinition = "TINYINT UNSIGNED", nullable = false)
     private Short frequencyValue;
 
     @Column(name = "next_maintenance", columnDefinition = "TIMESTAMP", nullable = false)

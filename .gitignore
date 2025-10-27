@@ -41,25 +41,9 @@ build/
 # Ignorar prueba específica
 src/test/java/com/labMetricas/LabMetricas/LabMetricasApplicationTests.java
 
-# Ignora archivos de configuración con datos sensibles
+# Ignora el application propeties
 src/main/resources/application.properties
 src/main/resources/application-dev.properties
-src/main/resources/application-postgres.properties
-src/main/resources/application-mysql.properties
-
-# Mantener archivos de configuración de producción (sin datos sensibles)
-# !src/main/resources/application-prod.properties
-
-# Mantener archivos de configuración de Render
-!system.properties
-!Procfile
-
-# Mantener archivos de Docker
-!Dockerfile
-!.dockerignore
-docker-compose.yml
-
-# docker-compose.yml
 
 # Elimina los test logs
 servicio_test.log.*.[0-9]
