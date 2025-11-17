@@ -38,9 +38,6 @@ public class Products_stock {
     @Column(name = "unidad", columnDefinition = "VARCHAR(50)", nullable = false, length = 50)
     private String unidad;
 
-    @Column(name = "ultima_actualizacion", columnDefinition = "TIMESTAMP")
-    private LocalDateTime ultimaActualizacion;
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
