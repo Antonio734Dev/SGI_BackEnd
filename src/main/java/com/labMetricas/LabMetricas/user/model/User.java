@@ -6,6 +6,8 @@ import com.labMetricas.LabMetricas.Notice.model.Notice;
 import com.labMetricas.LabMetricas.NoticeRecipient.model.NoticeRecipient;
 import com.labMetricas.LabMetricas.document.model.Document;
 import com.labMetricas.LabMetricas.passwordResetToken.model.PasswordResetToken;
+import com.labMetricas.LabMetricas.products_ingreso_material.model.Products_ingreso_material;
+import com.labMetricas.LabMetricas.products_stock_movements.model.Products_stock_movements;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -85,6 +87,14 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user")
     @JsonIgnore
     private List<NoticeRecipient> receivedNotices;
+
+    @OneToMany(mappedBy = "createdByUser")
+    @JsonIgnore
+    private List<Products_ingreso_material> createdProductsIngresoMaterial;
+
+    @OneToMany(mappedBy = "user")
+    @JsonIgnore
+    private List<Products_stock_movements> stockMovements;
 
     private boolean enabled = true;
 
