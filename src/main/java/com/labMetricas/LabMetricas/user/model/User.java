@@ -1,8 +1,6 @@
 package com.labMetricas.LabMetricas.user.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.labMetricas.LabMetricas.equipment.model.Equipment;
-import com.labMetricas.LabMetricas.maintenance.model.Maintenance;
 import com.labMetricas.LabMetricas.role.model.Role;
 import com.labMetricas.LabMetricas.Notice.model.Notice;
 import com.labMetricas.LabMetricas.NoticeRecipient.model.NoticeRecipient;
@@ -62,14 +60,6 @@ public class User implements UserDetails {
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
-
-    @OneToMany(mappedBy = "assignedTo")
-    @JsonIgnore
-    private List<Equipment> equipments;
-
-    @OneToMany(mappedBy = "responsible")
-    @JsonIgnore
-    private List<Maintenance> maintenances;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;

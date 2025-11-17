@@ -1,7 +1,6 @@
 package com.labMetricas.LabMetricas.user.controller;
 
 import com.labMetricas.LabMetricas.enums.TypeResponse;
-import com.labMetricas.LabMetricas.security.AuthController;
 import com.labMetricas.LabMetricas.user.dto.UserDetailsDto;
 import com.labMetricas.LabMetricas.user.model.User;
 import com.labMetricas.LabMetricas.user.model.dto.ChangePasswordDto;
@@ -19,10 +18,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
