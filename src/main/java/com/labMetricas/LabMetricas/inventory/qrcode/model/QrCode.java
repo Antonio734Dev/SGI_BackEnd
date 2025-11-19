@@ -1,7 +1,11 @@
-package com.labMetricas.LabMetricas.qr_code.model;
+package com.labMetricas.LabMetricas.inventory.qrcode.model;
 
-import com.labMetricas.LabMetricas.products_ingreso_material.model.Products_ingreso_material;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,29 +19,22 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Qr_code {
-    
+public class QrCode {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Products_ingreso_material product;
-
-    @Column(name = "qr_contenido", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "qr_contenido", nullable = false, columnDefinition = "TEXT")
     private String qrContenido;
-
-    @Lob
-    @Column(name = "qr_imagen", columnDefinition = "LONGBLOB")
-    private byte[] qrImagen;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
 
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }
+
