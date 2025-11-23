@@ -2,6 +2,8 @@ package com.labMetricas.LabMetricas.config;
 
 import com.labMetricas.LabMetricas.role.model.Role;
 import com.labMetricas.LabMetricas.role.repository.RoleRepository;
+import com.labMetricas.LabMetricas.status.model.ProductStatus;
+import com.labMetricas.LabMetricas.status.repository.ProductStatusRepository;
 import com.labMetricas.LabMetricas.user.model.User;
 import com.labMetricas.LabMetricas.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,9 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private ProductStatusRepository productStatusRepository;
+
     @Override
     public void run(String... args) {
         try {
@@ -36,6 +41,9 @@ public class DataInitializer implements CommandLineRunner {
 
             // Create default users
             createDefaultUsers();
+
+            // Initialize product statuses
+            initializeProductStatuses();
 
             logger.info("Database initialization completed successfully");
         } catch (Exception e) {
@@ -117,6 +125,48 @@ public class DataInitializer implements CommandLineRunner {
             role.setUpdatedAt(LocalDateTime.now());
             roleRepository.save(role);
             logger.info("Created role: {}", name);
+        }
+    }
+
+    private void initializeProductStatuses() {
+        // Check if table is empty
+        if (productStatusRepository.count() == 0) {
+            // Get the first admin user to set as created_by_user_id
+            User adminUser = userRepository.findByEmail("antoniogarciagonzalez212@gmail.com")
+                .orElseGet(() -> {
+                    // If admin doesn't exist, get any user or create a default
+                    return userRepository.findAll().stream()
+                        .findFirst()
+                        .orElse(null);
+                });
+
+            if (adminUser == null) {
+                logger.warn("No user found to assign as creator for product statuses. Skipping initialization.");
+                return;
+            }
+
+            // Create the 4 default product statuses
+            createProductStatusIfNotExists("Sellado", "Producto cerrado de fábrica", adminUser);
+            createProductStatusIfNotExists("Abierto", "Producto en uso", adminUser);
+            createProductStatusIfNotExists("Terminado", "Producto agotado o vacio", adminUser);
+            createProductStatusIfNotExists("Cuarentena", "Producto en revisión de calidad", adminUser);
+
+            logger.info("Product statuses initialized successfully");
+        } else {
+            logger.info("Product statuses already exist. Skipping initialization.");
+        }
+    }
+
+    private void createProductStatusIfNotExists(String name, String description, User createdByUser) {
+        if (!productStatusRepository.existsByName(name)) {
+            ProductStatus productStatus = new ProductStatus();
+            productStatus.setName(name);
+            productStatus.setDescription(description);
+            productStatus.setCreatedByUser(createdByUser);
+            productStatus.setCreatedAt(LocalDateTime.now());
+            productStatus.setUpdatedAt(LocalDateTime.now());
+            productStatusRepository.save(productStatus);
+            logger.info("Created product status: {} - {}", name, description);
         }
     }
 

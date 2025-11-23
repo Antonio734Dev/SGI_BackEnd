@@ -1,7 +1,7 @@
-package com.labMetricas.LabMetricas.inventory.movement.model;
+package com.labMetricas.LabMetricas.movement.model;
 
 import com.labMetricas.LabMetricas.enums.TipoMovimiento;
-import com.labMetricas.LabMetricas.inventory.catalogue.model.StockCatalogue;
+import com.labMetricas.LabMetricas.catalogue.model.StockCatalogue;
 import com.labMetricas.LabMetricas.user.model.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -45,13 +45,13 @@ public class ProductStockMovement {
     @Column(name = "tipo", nullable = false, columnDefinition = "ENUM('entrada', 'salida', 'ajuste')")
     private TipoMovimiento tipo;
 
-    @Column(name = "cantidad", nullable = false, precision = 10, scale = 2)
+    @Column(name = "cantidad", columnDefinition = "DECIMAL(10,2)", nullable = false, precision = 10, scale = 2)
     private BigDecimal cantidad;
 
-    @Column(name = "motivo", length = 255)
+    @Column(name = "motivo", columnDefinition = "VARCHAR(255)", length = 255)
     private String motivo;
 
-    @Column(name = "referencia", length = 100)
+    @Column(name = "referencia", columnDefinition = "VARCHAR(100)", length = 100)
     private String referencia;
 
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

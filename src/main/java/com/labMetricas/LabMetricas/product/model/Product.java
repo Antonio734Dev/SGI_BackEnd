@@ -1,8 +1,8 @@
-package com.labMetricas.LabMetricas.inventory.product.model;
+package com.labMetricas.LabMetricas.product.model;
 
-import com.labMetricas.LabMetricas.inventory.catalogue.model.StockCatalogue;
-import com.labMetricas.LabMetricas.inventory.qrcode.model.QrCode;
-import com.labMetricas.LabMetricas.inventory.status.model.ProductStatus;
+import com.labMetricas.LabMetricas.catalogue.model.StockCatalogue;
+import com.labMetricas.LabMetricas.qrcode.model.QrCode;
+import com.labMetricas.LabMetricas.status.model.ProductStatus;
 import com.labMetricas.LabMetricas.user.model.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -49,37 +49,37 @@ public class Product {
     @JoinColumn(name = "created_by_user_id", columnDefinition = "BINARY(16)")
     private User createdByUser;
 
-    @Column(name = "material", length = 200)
+    @Column(name = "material", columnDefinition = "VARCHAR(200)", length = 200)
     private String material;
 
-    @Column(name = "nombre", nullable = false, length = 200)
+    @Column(name = "nombre", columnDefinition = "VARCHAR(200)", nullable = false, length = 200)
     private String nombre;
 
-    @Column(name = "fecha", nullable = false)
+    @Column(name = "fecha", columnDefinition = "DATE", nullable = false)
     private LocalDate fecha;
 
-    @Column(name = "codigo", nullable = false, length = 50)
+    @Column(name = "codigo", columnDefinition = "VARCHAR(50)", nullable = false, length = 50)
     private String codigo;
 
-    @Column(name = "lote", nullable = false, length = 100)
+    @Column(name = "lote", columnDefinition = "VARCHAR(100)", nullable = false, length = 100)
     private String lote;
 
-    @Column(name = "caducidad", nullable = false)
+    @Column(name = "caducidad", columnDefinition = "DATE", nullable = false)
     private LocalDate caducidad;
 
-    @Column(name = "reanalisis")
+    @Column(name = "reanalisis", columnDefinition = "DATE")
     private LocalDate reanalisis;
 
-    @Column(name = "cantidad_texto", nullable = false, length = 255)
+    @Column(name = "cantidad_texto", columnDefinition = "VARCHAR(255)", nullable = false, length = 255)
     private String cantidadTexto;
 
-    @Column(name = "total_envases", nullable = false)
+    @Column(name = "total_envases", columnDefinition = "INT", nullable = false)
     private Integer totalEnvases;
 
-    @Column(name = "envases_rechazados", nullable = false)
+    @Column(name = "envases_rechazados", columnDefinition = "INT", nullable = false)
     private Integer envasesRechazados = 0;
 
-    @Column(name = "envases_aprobados", nullable = false)
+    @Column(name = "envases_aprobados", columnDefinition = "INT", nullable = false)
     private Integer envasesAprobados = 0;
 
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

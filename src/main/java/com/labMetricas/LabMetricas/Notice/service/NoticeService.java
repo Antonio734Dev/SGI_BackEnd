@@ -1,9 +1,9 @@
 package com.labMetricas.LabMetricas.Notice.service;
 
+import com.labMetricas.LabMetricas.config.ProductionEmailService;
 import com.labMetricas.LabMetricas.Notice.model.Notice;
 import com.labMetricas.LabMetricas.Notice.model.dto.NoticeDto;
 import com.labMetricas.LabMetricas.Notice.repository.NoticeRepository;
-import com.labMetricas.LabMetricas.config.ProductionEmailService;
 import com.labMetricas.LabMetricas.user.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

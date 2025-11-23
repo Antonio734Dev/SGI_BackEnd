@@ -1,8 +1,8 @@
 package com.labMetricas.LabMetricas.Notice.controller;
 
+import com.labMetricas.LabMetricas.enums.TypeResponse;
 import com.labMetricas.LabMetricas.Notice.model.dto.NoticeDto;
 import com.labMetricas.LabMetricas.Notice.service.NoticeService;
-import com.labMetricas.LabMetricas.enums.TypeResponse;
 import com.labMetricas.LabMetricas.user.model.User;
 import com.labMetricas.LabMetricas.user.service.UserService;
 import com.labMetricas.LabMetricas.util.ResponseObject;

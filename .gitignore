@@ -48,3 +48,6 @@ src/main/resources/application-dev.properties
 # Elimina los test logs
 servicio_test.log.*.[0-9]
 servicio_test.log.*.gz
+
+ENDPOINT_TEST_INVENTARIO.md
+ENDPOINTS_TEST_INVENTARIO.md

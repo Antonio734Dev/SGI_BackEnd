@@ -1,8 +1,8 @@
-package com.labMetricas.LabMetricas.inventory.catalogue.model;
+package com.labMetricas.LabMetricas.catalogue.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.labMetricas.LabMetricas.inventory.movement.model.ProductStockMovement;
-import com.labMetricas.LabMetricas.inventory.product.model.Product;
+import com.labMetricas.LabMetricas.movement.model.ProductStockMovement;
+import com.labMetricas.LabMetricas.product.model.Product;
 import com.labMetricas.LabMetricas.user.model.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -10,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -25,7 +26,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "stock_catalogue")
+@Table(name = "stock_catalogue",
+    indexes = {
+        @Index(name = "stock_catalogue_name_index", columnList = "name"),
+        @Index(name = "stock_catalogue_sku_index", columnList = "sku")
+    })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,10 +41,10 @@ public class StockCatalogue {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "name", length = 255)
+    @Column(name = "name", columnDefinition = "VARCHAR(255)", nullable = false, length = 255)
     private String name;
 
-    @Column(name = "sku", length = 100)
+    @Column(name = "sku", columnDefinition = "VARCHAR(100)", unique = true, length = 100)
     private String sku;
 
     @Column(name = "description", columnDefinition = "TEXT")
@@ -49,16 +54,16 @@ public class StockCatalogue {
     @JoinColumn(name = "created_by_user_id", columnDefinition = "BINARY(16)")
     private User createdByUser;
 
-    @Column(name = "stock_actual", nullable = false, precision = 10, scale = 2)
+    @Column(name = "stock_actual", columnDefinition = "DECIMAL(10,2)", nullable = false, precision = 10, scale = 2)
     private BigDecimal stockActual = BigDecimal.ZERO;
 
-    @Column(name = "stock_minimo", precision = 10, scale = 2)
+    @Column(name = "stock_minimo", columnDefinition = "DECIMAL(10,2)", precision = 10, scale = 2)
     private BigDecimal stockMinimo = BigDecimal.ZERO;
 
-    @Column(name = "stock_maximo", precision = 10, scale = 2)
+    @Column(name = "stock_maximo", columnDefinition = "DECIMAL(10,2)", precision = 10, scale = 2)
     private BigDecimal stockMaximo = BigDecimal.ZERO;
 
-    @Column(name = "unidad", nullable = false, length = 50)
+    @Column(name = "unidad", columnDefinition = "VARCHAR(50)", nullable = false, length = 50)
     private String unidad;
 
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
