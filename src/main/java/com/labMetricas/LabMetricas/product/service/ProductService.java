@@ -16,6 +16,7 @@ import com.labMetricas.LabMetricas.status.model.ProductStatus;
 import com.labMetricas.LabMetricas.status.repository.ProductStatusRepository;
 import com.labMetricas.LabMetricas.user.model.User;
 import com.labMetricas.LabMetricas.user.repository.UserRepository;
+import com.labMetricas.LabMetricas.qrcode.service.QrCodeService;
 import com.labMetricas.LabMetricas.util.PageResponse;
 import com.labMetricas.LabMetricas.util.ResponseObject;
 import jakarta.transaction.Transactional;
@@ -32,6 +33,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -39,6 +41,8 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.google.zxing.WriterException;
 
 @Service
 public class ProductService {
@@ -61,6 +65,9 @@ public class ProductService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private QrCodeService qrCodeService;
 
     @Transactional
     public ResponseEntity<ResponseObject> createProduct(CreateProductDto createProductDto) {
@@ -341,6 +348,29 @@ public class ProductService {
         }
 
         return dto;
+    }
+
+    /**
+     * Genera la imagen QR del producto a partir de su hash
+     */
+    public byte[] generateQrCodeImage(String qrHash) {
+        try {
+            logger.info("Generating QR code image for hash: {}", qrHash);
+
+            // Validar que el hash existe
+            if (!qrCodeRepository.findByQrContenidoAndDeletedAtIsNull(qrHash).isPresent()) {
+                throw new RuntimeException("QR hash not found");
+            }
+
+            // Generar la imagen del QR
+            byte[] qrImage = qrCodeService.generateQrCodeImage(qrHash);
+            
+            logger.info("QR code image generated successfully for hash: {}", qrHash);
+            return qrImage;
+        } catch (WriterException | IOException e) {
+            logger.error("Error generating QR code image", e);
+            throw new RuntimeException("Error generating QR code image: " + e.getMessage());
+        }
     }
 }
 

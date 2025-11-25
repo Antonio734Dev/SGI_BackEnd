@@ -75,6 +75,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
+                .requestMatchers("/api/products/qr/**").permitAll()
                 
                 // User endpoints for all authenticated users (ADMIN, SUPERVISOR, OPERADOR)
                 .requestMatchers("/api/users/**").hasAnyAuthority("ADMIN", "SUPERVISOR", "OPERADOR")
