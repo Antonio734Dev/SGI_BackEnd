@@ -66,6 +66,18 @@ public class StockCatalogue {
     @Column(name = "unidad", columnDefinition = "VARCHAR(50)", nullable = false, length = 50)
     private String unidad;
 
+    @Column(name = "cantidad_texto", columnDefinition = "INT", nullable = false)
+    private Integer cantidadTexto = 0;
+
+    @Column(name = "total_envases", columnDefinition = "INT", nullable = false)
+    private Integer totalEnvases = 0;
+
+    @Column(name = "envases_rechazados", columnDefinition = "INT", nullable = false)
+    private Integer envasesRechazados = 0;
+
+    @Column(name = "envases_aprobados", columnDefinition = "INT", nullable = false)
+    private Integer envasesAprobados = 0;
+
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 

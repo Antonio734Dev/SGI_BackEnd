@@ -90,10 +90,6 @@ public class ProductService {
             product.setLote(createProductDto.getLote());
             product.setFecha(createProductDto.getFechaIngreso());
             product.setCaducidad(createProductDto.getFechaCaducidad());
-            product.setCantidadTexto(createProductDto.getCantidadTexto());
-            product.setTotalEnvases(createProductDto.getTotalEnvases());
-            product.setEnvasesRechazados(0);
-            product.setEnvasesAprobados(0);
             product.setCreatedAt(LocalDateTime.now());
             product.setUpdatedAt(LocalDateTime.now());
 
@@ -141,6 +137,17 @@ public class ProductService {
                 stockCatalogue.getStockActual() : BigDecimal.ZERO;
             BigDecimal newStock = currentStock.add(BigDecimal.valueOf(createProductDto.getTotalEnvases()));
             stockCatalogue.setStockActual(newStock);
+
+            if (stockCatalogue.getCantidadTexto() == null || stockCatalogue.getCantidadTexto() == 0) {
+                stockCatalogue.setCantidadTexto(createProductDto.getCantidadTexto());
+            }
+            Integer currentTotalEnvases = stockCatalogue.getTotalEnvases() != null ? 
+                stockCatalogue.getTotalEnvases() : 0;
+            stockCatalogue.setTotalEnvases(currentTotalEnvases + createProductDto.getTotalEnvases());
+
+            Integer currentEnvasesAprobados = stockCatalogue.getEnvasesAprobados() != null ? 
+                stockCatalogue.getEnvasesAprobados() : 0;
+            stockCatalogue.setEnvasesAprobados(currentEnvasesAprobados + createProductDto.getTotalEnvases());
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
             
             StockCatalogue updatedStockCatalogue = stockCatalogueRepository.save(stockCatalogue);
@@ -299,10 +306,6 @@ public class ProductService {
         dto.setFecha(product.getFecha());
         dto.setCaducidad(product.getCaducidad());
         dto.setReanalisis(product.getReanalisis());
-        dto.setCantidadTexto(product.getCantidadTexto());
-        dto.setTotalEnvases(product.getTotalEnvases());
-        dto.setEnvasesRechazados(product.getEnvasesRechazados());
-        dto.setEnvasesAprobados(product.getEnvasesAprobados());
         dto.setCreatedAt(product.getCreatedAt());
         dto.setUpdatedAt(product.getUpdatedAt());
 
@@ -312,6 +315,10 @@ public class ProductService {
             dto.setStockCatalogueName(product.getStockCatalogue().getName());
             dto.setStockCatalogueSku(product.getStockCatalogue().getSku());
             dto.setStockCatalogueUnidad(product.getStockCatalogue().getUnidad());
+            dto.setCantidadTexto(product.getStockCatalogue().getCantidadTexto());
+            dto.setTotalEnvases(product.getStockCatalogue().getTotalEnvases());
+            dto.setEnvasesRechazados(product.getStockCatalogue().getEnvasesRechazados());
+            dto.setEnvasesAprobados(product.getStockCatalogue().getEnvasesAprobados());
         }
 
         // Información del estado (nombres legibles)

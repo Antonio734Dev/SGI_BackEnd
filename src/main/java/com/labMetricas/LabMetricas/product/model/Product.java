@@ -70,18 +70,6 @@ public class Product {
     @Column(name = "reanalisis", columnDefinition = "DATE")
     private LocalDate reanalisis;
 
-    @Column(name = "cantidad_texto", columnDefinition = "VARCHAR(255)", nullable = false, length = 255)
-    private String cantidadTexto;
-
-    @Column(name = "total_envases", columnDefinition = "INT", nullable = false)
-    private Integer totalEnvases;
-
-    @Column(name = "envases_rechazados", columnDefinition = "INT", nullable = false)
-    private Integer envasesRechazados = 0;
-
-    @Column(name = "envases_aprobados", columnDefinition = "INT", nullable = false)
-    private Integer envasesAprobados = 0;
-
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 

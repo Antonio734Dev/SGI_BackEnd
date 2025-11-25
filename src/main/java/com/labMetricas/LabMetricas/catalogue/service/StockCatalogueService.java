@@ -63,6 +63,14 @@ public class StockCatalogueService {
                 stockCatalogueDto.getStockMaximo() : BigDecimal.ZERO);
             // IMPORTANT: stock_actual is always initialized to 0
             stockCatalogue.setStockActual(BigDecimal.ZERO);
+            stockCatalogue.setCantidadTexto(
+                stockCatalogueDto.getCantidadTexto() != null ? stockCatalogueDto.getCantidadTexto() : 0);
+            stockCatalogue.setTotalEnvases(
+                stockCatalogueDto.getTotalEnvases() != null ? stockCatalogueDto.getTotalEnvases() : 0);
+            stockCatalogue.setEnvasesRechazados(
+                stockCatalogueDto.getEnvasesRechazados() != null ? stockCatalogueDto.getEnvasesRechazados() : 0);
+            stockCatalogue.setEnvasesAprobados(
+                stockCatalogueDto.getEnvasesAprobados() != null ? stockCatalogueDto.getEnvasesAprobados() : 0);
             stockCatalogue.setCreatedByUser(currentUser);
             stockCatalogue.setCreatedAt(LocalDateTime.now());
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
@@ -109,9 +117,21 @@ public class StockCatalogueService {
             existingStockCatalogue.setDescription(stockCatalogueDto.getDescription());
             existingStockCatalogue.setUnidad(stockCatalogueDto.getUnidad());
             existingStockCatalogue.setStockMinimo(stockCatalogueDto.getStockMinimo() != null ? 
-                stockCatalogueDto.getStockMinimo() : BigDecimal.ZERO);
+                stockCatalogueDto.getStockMinimo() : existingStockCatalogue.getStockMinimo());
             existingStockCatalogue.setStockMaximo(stockCatalogueDto.getStockMaximo() != null ? 
-                stockCatalogueDto.getStockMaximo() : BigDecimal.ZERO);
+                stockCatalogueDto.getStockMaximo() : existingStockCatalogue.getStockMaximo());
+            if (stockCatalogueDto.getCantidadTexto() != null) {
+                existingStockCatalogue.setCantidadTexto(stockCatalogueDto.getCantidadTexto());
+            }
+            if (stockCatalogueDto.getTotalEnvases() != null) {
+                existingStockCatalogue.setTotalEnvases(stockCatalogueDto.getTotalEnvases());
+            }
+            if (stockCatalogueDto.getEnvasesRechazados() != null) {
+                existingStockCatalogue.setEnvasesRechazados(stockCatalogueDto.getEnvasesRechazados());
+            }
+            if (stockCatalogueDto.getEnvasesAprobados() != null) {
+                existingStockCatalogue.setEnvasesAprobados(stockCatalogueDto.getEnvasesAprobados());
+            }
             existingStockCatalogue.setUpdatedAt(LocalDateTime.now());
 
             // Save updated stock catalogue
@@ -213,6 +233,10 @@ public class StockCatalogueService {
         dto.setStockMinimo(stockCatalogue.getStockMinimo());
         dto.setStockMaximo(stockCatalogue.getStockMaximo());
         dto.setStockActual(stockCatalogue.getStockActual());
+        dto.setCantidadTexto(stockCatalogue.getCantidadTexto());
+        dto.setTotalEnvases(stockCatalogue.getTotalEnvases());
+        dto.setEnvasesRechazados(stockCatalogue.getEnvasesRechazados());
+        dto.setEnvasesAprobados(stockCatalogue.getEnvasesAprobados());
         dto.setCreatedAt(stockCatalogue.getCreatedAt());
         dto.setUpdatedAt(stockCatalogue.getUpdatedAt());
         dto.setDeletedAt(stockCatalogue.getDeletedAt());

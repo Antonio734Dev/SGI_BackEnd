@@ -33,9 +33,9 @@ public class CreateProductDto {
     @NotNull(message = "Fecha caducidad is required")
     private LocalDate fechaCaducidad;
 
-    @NotBlank(message = "Cantidad texto is required")
-    @Size(max = 255, message = "Cantidad texto must be less than 255 characters")
-    private String cantidadTexto;
+    @NotNull(message = "Cantidad texto is required")
+    @Positive(message = "Cantidad texto must be positive")
+    private Integer cantidadTexto;
 
     @NotNull(message = "Total envases is required")
     @Positive(message = "Total envases must be positive")

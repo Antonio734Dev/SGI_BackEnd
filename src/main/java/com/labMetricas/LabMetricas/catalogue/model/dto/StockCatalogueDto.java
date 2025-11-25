@@ -42,6 +42,14 @@ public class StockCatalogueDto {
     // Stock actual is read-only, should not be set in DTOs for create/update
     private BigDecimal stockActual;
 
+    private Integer cantidadTexto;
+
+    private Integer totalEnvases;
+
+    private Integer envasesRechazados;
+
+    private Integer envasesAprobados;
+
     private UUID createdByUserId;
 
     private String createdByUserName;

@@ -23,7 +23,7 @@ public class ProductResponseDto {
     private LocalDate fecha;
     private LocalDate caducidad;
     private LocalDate reanalisis;
-    private String cantidadTexto;
+    private Integer cantidadTexto;
     private Integer totalEnvases;
     private Integer envasesRechazados;
     private Integer envasesAprobados;
