@@ -57,20 +57,24 @@ public class StockCatalogueService {
             stockCatalogue.setSku(stockCatalogueDto.getSku());
             stockCatalogue.setDescription(stockCatalogueDto.getDescription());
             stockCatalogue.setUnidad(stockCatalogueDto.getUnidad());
-            stockCatalogue.setStockMinimo(stockCatalogueDto.getStockMinimo() != null ? 
-                stockCatalogueDto.getStockMinimo() : BigDecimal.ZERO);
-            stockCatalogue.setStockMaximo(stockCatalogueDto.getStockMaximo() != null ? 
-                stockCatalogueDto.getStockMaximo() : BigDecimal.ZERO);
             // IMPORTANT: stock_actual is always initialized to 0
             stockCatalogue.setStockActual(BigDecimal.ZERO);
-            stockCatalogue.setCantidadTexto(
-                stockCatalogueDto.getCantidadTexto() != null ? stockCatalogueDto.getCantidadTexto() : 0);
-            stockCatalogue.setTotalEnvases(
-                stockCatalogueDto.getTotalEnvases() != null ? stockCatalogueDto.getTotalEnvases() : 0);
+            stockCatalogue.setStockCantidad(
+                stockCatalogueDto.getStockCantidad() != null ? stockCatalogueDto.getStockCantidad() : 0);
+            stockCatalogue.setCantidad(
+                stockCatalogueDto.getCantidad() != null ? stockCatalogueDto.getCantidad() : 0);
             stockCatalogue.setEnvasesRechazados(
                 stockCatalogueDto.getEnvasesRechazados() != null ? stockCatalogueDto.getEnvasesRechazados() : 0);
             stockCatalogue.setEnvasesAprobados(
                 stockCatalogueDto.getEnvasesAprobados() != null ? stockCatalogueDto.getEnvasesAprobados() : 0);
+            stockCatalogue.setStockSellado(
+                stockCatalogueDto.getStockSellado() != null ? stockCatalogueDto.getStockSellado() : 0);
+            stockCatalogue.setStockAbierto(
+                stockCatalogueDto.getStockAbierto() != null ? stockCatalogueDto.getStockAbierto() : 0);
+            stockCatalogue.setStockTerminado(
+                stockCatalogueDto.getStockTerminado() != null ? stockCatalogueDto.getStockTerminado() : 0);
+            stockCatalogue.setStockCuarentena(
+                stockCatalogueDto.getStockCuarentena() != null ? stockCatalogueDto.getStockCuarentena() : 0);
             stockCatalogue.setCreatedByUser(currentUser);
             stockCatalogue.setCreatedAt(LocalDateTime.now());
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
@@ -116,21 +120,29 @@ public class StockCatalogueService {
             existingStockCatalogue.setSku(stockCatalogueDto.getSku());
             existingStockCatalogue.setDescription(stockCatalogueDto.getDescription());
             existingStockCatalogue.setUnidad(stockCatalogueDto.getUnidad());
-            existingStockCatalogue.setStockMinimo(stockCatalogueDto.getStockMinimo() != null ? 
-                stockCatalogueDto.getStockMinimo() : existingStockCatalogue.getStockMinimo());
-            existingStockCatalogue.setStockMaximo(stockCatalogueDto.getStockMaximo() != null ? 
-                stockCatalogueDto.getStockMaximo() : existingStockCatalogue.getStockMaximo());
-            if (stockCatalogueDto.getCantidadTexto() != null) {
-                existingStockCatalogue.setCantidadTexto(stockCatalogueDto.getCantidadTexto());
+            if (stockCatalogueDto.getStockCantidad() != null) {
+                existingStockCatalogue.setStockCantidad(stockCatalogueDto.getStockCantidad());
             }
-            if (stockCatalogueDto.getTotalEnvases() != null) {
-                existingStockCatalogue.setTotalEnvases(stockCatalogueDto.getTotalEnvases());
+            if (stockCatalogueDto.getCantidad() != null) {
+                existingStockCatalogue.setCantidad(stockCatalogueDto.getCantidad());
             }
             if (stockCatalogueDto.getEnvasesRechazados() != null) {
                 existingStockCatalogue.setEnvasesRechazados(stockCatalogueDto.getEnvasesRechazados());
             }
             if (stockCatalogueDto.getEnvasesAprobados() != null) {
                 existingStockCatalogue.setEnvasesAprobados(stockCatalogueDto.getEnvasesAprobados());
+            }
+            if (stockCatalogueDto.getStockSellado() != null) {
+                existingStockCatalogue.setStockSellado(stockCatalogueDto.getStockSellado());
+            }
+            if (stockCatalogueDto.getStockAbierto() != null) {
+                existingStockCatalogue.setStockAbierto(stockCatalogueDto.getStockAbierto());
+            }
+            if (stockCatalogueDto.getStockTerminado() != null) {
+                existingStockCatalogue.setStockTerminado(stockCatalogueDto.getStockTerminado());
+            }
+            if (stockCatalogueDto.getStockCuarentena() != null) {
+                existingStockCatalogue.setStockCuarentena(stockCatalogueDto.getStockCuarentena());
             }
             existingStockCatalogue.setUpdatedAt(LocalDateTime.now());
 
@@ -230,13 +242,15 @@ public class StockCatalogueService {
         dto.setSku(stockCatalogue.getSku());
         dto.setDescription(stockCatalogue.getDescription());
         dto.setUnidad(stockCatalogue.getUnidad());
-        dto.setStockMinimo(stockCatalogue.getStockMinimo());
-        dto.setStockMaximo(stockCatalogue.getStockMaximo());
         dto.setStockActual(stockCatalogue.getStockActual());
-        dto.setCantidadTexto(stockCatalogue.getCantidadTexto());
-        dto.setTotalEnvases(stockCatalogue.getTotalEnvases());
+        dto.setStockCantidad(stockCatalogue.getStockCantidad());
+        dto.setCantidad(stockCatalogue.getCantidad());
         dto.setEnvasesRechazados(stockCatalogue.getEnvasesRechazados());
         dto.setEnvasesAprobados(stockCatalogue.getEnvasesAprobados());
+        dto.setStockSellado(stockCatalogue.getStockSellado());
+        dto.setStockAbierto(stockCatalogue.getStockAbierto());
+        dto.setStockTerminado(stockCatalogue.getStockTerminado());
+        dto.setStockCuarentena(stockCatalogue.getStockCuarentena());
         dto.setCreatedAt(stockCatalogue.getCreatedAt());
         dto.setUpdatedAt(stockCatalogue.getUpdatedAt());
         dto.setDeletedAt(stockCatalogue.getDeletedAt());

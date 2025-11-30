@@ -23,10 +23,14 @@ public class ProductResponseDto {
     private LocalDate fecha;
     private LocalDate caducidad;
     private LocalDate reanalisis;
-    private Integer cantidadTexto;
-    private Integer totalEnvases;
+    private Integer cantidad;
+    private Integer stockCantidad;
     private Integer envasesRechazados;
     private Integer envasesAprobados;
+    private Integer stockSellado;
+    private Integer stockAbierto;
+    private Integer stockTerminado;
+    private Integer stockCuarentena;
     
     // Información del catálogo (nombres legibles)
     private Integer stockCatalogueId;

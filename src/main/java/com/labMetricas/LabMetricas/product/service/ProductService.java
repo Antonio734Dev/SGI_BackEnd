@@ -40,6 +40,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import com.google.zxing.WriterException;
@@ -145,16 +146,18 @@ public class ProductService {
             BigDecimal newStock = currentStock.add(BigDecimal.valueOf(createProductDto.getTotalEnvases()));
             stockCatalogue.setStockActual(newStock);
 
-            if (stockCatalogue.getCantidadTexto() == null || stockCatalogue.getCantidadTexto() == 0) {
-                stockCatalogue.setCantidadTexto(createProductDto.getCantidadTexto());
+            if (stockCatalogue.getCantidad() == null || stockCatalogue.getCantidad() == 0) {
+                stockCatalogue.setCantidad(createProductDto.getCantidad());
             }
-            Integer currentTotalEnvases = stockCatalogue.getTotalEnvases() != null ? 
-                stockCatalogue.getTotalEnvases() : 0;
-            stockCatalogue.setTotalEnvases(currentTotalEnvases + createProductDto.getTotalEnvases());
+            Integer currentStockCantidad = stockCatalogue.getStockCantidad() != null ? 
+                stockCatalogue.getStockCantidad() : 0;
+            stockCatalogue.setStockCantidad(currentStockCantidad + createProductDto.getTotalEnvases());
 
             Integer currentEnvasesAprobados = stockCatalogue.getEnvasesAprobados() != null ? 
                 stockCatalogue.getEnvasesAprobados() : 0;
             stockCatalogue.setEnvasesAprobados(currentEnvasesAprobados + createProductDto.getTotalEnvases());
+
+            updateStatusCounters(stockCatalogue, productStatus, createProductDto.getTotalEnvases());
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
             
             StockCatalogue updatedStockCatalogue = stockCatalogueRepository.save(stockCatalogue);
@@ -301,6 +304,34 @@ public class ProductService {
         }
     }
 
+    private void updateStatusCounters(StockCatalogue stockCatalogue, ProductStatus productStatus, int delta) {
+        if (stockCatalogue == null || productStatus == null || productStatus.getName() == null) {
+            return;
+        }
+
+        String statusName = productStatus.getName().toLowerCase(Locale.ROOT);
+
+        switch (statusName) {
+            case "sellado" -> {
+                int current = stockCatalogue.getStockSellado() != null ? stockCatalogue.getStockSellado() : 0;
+                stockCatalogue.setStockSellado(Math.max(0, current + delta));
+            }
+            case "abierto" -> {
+                int current = stockCatalogue.getStockAbierto() != null ? stockCatalogue.getStockAbierto() : 0;
+                stockCatalogue.setStockAbierto(Math.max(0, current + delta));
+            }
+            case "terminado" -> {
+                int current = stockCatalogue.getStockTerminado() != null ? stockCatalogue.getStockTerminado() : 0;
+                stockCatalogue.setStockTerminado(Math.max(0, current + delta));
+            }
+            case "cuarentena" -> {
+                int current = stockCatalogue.getStockCuarentena() != null ? stockCatalogue.getStockCuarentena() : 0;
+                stockCatalogue.setStockCuarentena(Math.max(0, current + delta));
+            }
+            default -> logger.warn("Unknown product status '{}' for stock counter update", productStatus.getName());
+        }
+    }
+
     /**
      * Convierte Product a ProductResponseDto con nombres legibles
      */
@@ -322,10 +353,14 @@ public class ProductService {
             dto.setStockCatalogueName(product.getStockCatalogue().getName());
             dto.setStockCatalogueSku(product.getStockCatalogue().getSku());
             dto.setStockCatalogueUnidad(product.getStockCatalogue().getUnidad());
-            dto.setCantidadTexto(product.getStockCatalogue().getCantidadTexto());
-            dto.setTotalEnvases(product.getStockCatalogue().getTotalEnvases());
+            dto.setCantidad(product.getStockCatalogue().getCantidad());
+            dto.setStockCantidad(product.getStockCatalogue().getStockCantidad());
             dto.setEnvasesRechazados(product.getStockCatalogue().getEnvasesRechazados());
             dto.setEnvasesAprobados(product.getStockCatalogue().getEnvasesAprobados());
+            dto.setStockSellado(product.getStockCatalogue().getStockSellado());
+            dto.setStockAbierto(product.getStockCatalogue().getStockAbierto());
+            dto.setStockTerminado(product.getStockCatalogue().getStockTerminado());
+            dto.setStockCuarentena(product.getStockCatalogue().getStockCuarentena());
         }
 
         // Información del estado (nombres legibles)

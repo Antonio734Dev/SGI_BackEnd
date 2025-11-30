@@ -57,26 +57,32 @@ public class StockCatalogue {
     @Column(name = "stock_actual", columnDefinition = "DECIMAL(10,2)", nullable = false, precision = 10, scale = 2)
     private BigDecimal stockActual = BigDecimal.ZERO;
 
-    @Column(name = "stock_minimo", columnDefinition = "DECIMAL(10,2)", precision = 10, scale = 2)
-    private BigDecimal stockMinimo = BigDecimal.ZERO;
-
-    @Column(name = "stock_maximo", columnDefinition = "DECIMAL(10,2)", precision = 10, scale = 2)
-    private BigDecimal stockMaximo = BigDecimal.ZERO;
+    @Column(name = "stock_cantidad", columnDefinition = "INT", nullable = false)
+    private Integer stockCantidad = 0;
 
     @Column(name = "unidad", columnDefinition = "VARCHAR(50)", nullable = false, length = 50)
     private String unidad;
 
-    @Column(name = "cantidad_texto", columnDefinition = "INT", nullable = false)
-    private Integer cantidadTexto = 0;
-
-    @Column(name = "total_envases", columnDefinition = "INT", nullable = false)
-    private Integer totalEnvases = 0;
+    @Column(name = "cantidad", columnDefinition = "INT", nullable = false)
+    private Integer cantidad = 0;
 
     @Column(name = "envases_rechazados", columnDefinition = "INT", nullable = false)
     private Integer envasesRechazados = 0;
 
     @Column(name = "envases_aprobados", columnDefinition = "INT", nullable = false)
     private Integer envasesAprobados = 0;
+
+    @Column(name = "stock_sellado", columnDefinition = "INT", nullable = false)
+    private Integer stockSellado = 0;
+
+    @Column(name = "stock_abierto", columnDefinition = "INT", nullable = false)
+    private Integer stockAbierto = 0;
+
+    @Column(name = "stock_terminado", columnDefinition = "INT", nullable = false)
+    private Integer stockTerminado = 0;
+
+    @Column(name = "stock_cuarentena", columnDefinition = "INT", nullable = false)
+    private Integer stockCuarentena = 0;
 
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;

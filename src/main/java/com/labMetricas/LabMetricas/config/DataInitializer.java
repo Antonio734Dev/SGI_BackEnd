@@ -216,19 +216,19 @@ public class DataInitializer implements CommandLineRunner {
             // Create sample stock catalogues
             createStockCatalogueIfNotExists("Azúcar Morena 1kg", "SKU-AZU-001", 
                 "Azúcar morena en presentación de 1 kilogramo", "kg", 
-                BigDecimal.valueOf(10), BigDecimal.valueOf(100), adminUser);
+                50, adminUser);
 
             createStockCatalogueIfNotExists("Harina de Trigo 2kg", "SKU-HAR-002", 
                 "Harina de trigo en presentación de 2 kilogramos", "kg", 
-                BigDecimal.valueOf(15), BigDecimal.valueOf(200), adminUser);
+                25, adminUser);
 
             createStockCatalogueIfNotExists("Aceite Vegetal 1L", "SKU-ACE-003", 
                 "Aceite vegetal en presentación de 1 litro", "litros", 
-                BigDecimal.valueOf(20), BigDecimal.valueOf(150), adminUser);
+                12, adminUser);
 
             createStockCatalogueIfNotExists("Sal de Mesa 500g", "SKU-SAL-004", 
                 "Sal de mesa en presentación de 500 gramos", "kg", 
-                BigDecimal.valueOf(5), BigDecimal.valueOf(80), adminUser);
+                5, adminUser);
 
             logger.info("Stock catalogues initialized successfully");
         } else {
@@ -237,16 +237,16 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void createStockCatalogueIfNotExists(String name, String sku, String description, 
-            String unidad, BigDecimal stockMinimo, BigDecimal stockMaximo, User createdByUser) {
+            String unidad, Integer cantidad, User createdByUser) {
         if (!stockCatalogueRepository.existsBySku(sku)) {
             StockCatalogue stockCatalogue = new StockCatalogue();
             stockCatalogue.setName(name);
             stockCatalogue.setSku(sku);
             stockCatalogue.setDescription(description);
             stockCatalogue.setUnidad(unidad);
-            stockCatalogue.setStockMinimo(stockMinimo);
-            stockCatalogue.setStockMaximo(stockMaximo);
             stockCatalogue.setStockActual(BigDecimal.ZERO);
+            stockCatalogue.setCantidad(cantidad != null ? cantidad : 0);
+            stockCatalogue.setStockCantidad(0);
             stockCatalogue.setCreatedByUser(createdByUser);
             stockCatalogue.setCreatedAt(LocalDateTime.now());
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
@@ -309,7 +309,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private void createProductWithQrAndMovement(String lote, StockCatalogue stockCatalogue, 
             ProductStatus productStatus, LocalDate fechaIngreso, LocalDate fechaCaducidad, 
-            Integer cantidadTexto, Integer totalEnvases, User createdByUser) {
+            Integer cantidad, Integer totalEnvases, User createdByUser) {
         try {
             // Create Product
             Product product = new Product();
@@ -353,15 +353,16 @@ public class DataInitializer implements CommandLineRunner {
             BigDecimal currentStock = stockCatalogue.getStockActual() != null ? 
                 stockCatalogue.getStockActual() : BigDecimal.ZERO;
             stockCatalogue.setStockActual(currentStock.add(BigDecimal.valueOf(totalEnvases)));
-            if (stockCatalogue.getCantidadTexto() == null || stockCatalogue.getCantidadTexto() == 0) {
-                stockCatalogue.setCantidadTexto(cantidadTexto);
+            if (stockCatalogue.getCantidad() == null || stockCatalogue.getCantidad() == 0) {
+                stockCatalogue.setCantidad(cantidad);
             }
-            Integer currentTotalEnvases = stockCatalogue.getTotalEnvases() != null ? 
-                stockCatalogue.getTotalEnvases() : 0;
-            stockCatalogue.setTotalEnvases(currentTotalEnvases + totalEnvases);
+            Integer currentStockCantidad = stockCatalogue.getStockCantidad() != null ? 
+                stockCatalogue.getStockCantidad() : 0;
+            stockCatalogue.setStockCantidad(currentStockCantidad + totalEnvases);
             Integer currentEnvasesAprobados = stockCatalogue.getEnvasesAprobados() != null ? 
                 stockCatalogue.getEnvasesAprobados() : 0;
             stockCatalogue.setEnvasesAprobados(currentEnvasesAprobados + totalEnvases);
+            incrementStatusCounter(stockCatalogue, productStatus, totalEnvases);
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
             stockCatalogueRepository.save(stockCatalogue);
 
@@ -400,6 +401,25 @@ public class DataInitializer implements CommandLineRunner {
             ? stockCatalogue.getSku() 
             : "SKU-" + stockCatalogue.getId();
         return sku + "-" + lote + "-" + System.currentTimeMillis() % 10000;
+    }
+
+    private void incrementStatusCounter(StockCatalogue stockCatalogue, ProductStatus status, int delta) {
+        if (stockCatalogue == null || status == null || status.getName() == null) {
+            return;
+        }
+
+        String name = status.getName().toLowerCase();
+        switch (name) {
+            case "sellado" -> stockCatalogue.setStockSellado(
+                Math.max(0, (stockCatalogue.getStockSellado() != null ? stockCatalogue.getStockSellado() : 0) + delta));
+            case "abierto" -> stockCatalogue.setStockAbierto(
+                Math.max(0, (stockCatalogue.getStockAbierto() != null ? stockCatalogue.getStockAbierto() : 0) + delta));
+            case "terminado" -> stockCatalogue.setStockTerminado(
+                Math.max(0, (stockCatalogue.getStockTerminado() != null ? stockCatalogue.getStockTerminado() : 0) + delta));
+            case "cuarentena" -> stockCatalogue.setStockCuarentena(
+                Math.max(0, (stockCatalogue.getStockCuarentena() != null ? stockCatalogue.getStockCuarentena() : 0) + delta));
+            default -> logger.warn("Unknown status '{}' when initializing counters", status.getName());
+        }
     }
 
 } 

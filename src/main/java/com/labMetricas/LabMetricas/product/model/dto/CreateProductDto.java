@@ -33,9 +33,9 @@ public class CreateProductDto {
     @NotNull(message = "Fecha caducidad is required")
     private LocalDate fechaCaducidad;
 
-    @NotNull(message = "Cantidad texto is required")
-    @Positive(message = "Cantidad texto must be positive")
-    private Integer cantidadTexto;
+    @NotNull(message = "Cantidad is required")
+    @Positive(message = "Cantidad must be positive")
+    private Integer cantidad;
 
     @NotNull(message = "Total envases is required")
     @Positive(message = "Total envases must be positive")

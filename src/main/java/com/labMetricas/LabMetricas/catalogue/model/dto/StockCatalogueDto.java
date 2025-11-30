@@ -33,22 +33,24 @@ public class StockCatalogueDto {
     @Size(max = 50, message = "Unidad must be less than 50 characters")
     private String unidad;
 
-    @NotNull(message = "Stock minimo is required")
-    private BigDecimal stockMinimo;
-
-    @NotNull(message = "Stock maximo is required")
-    private BigDecimal stockMaximo;
-
     // Stock actual is read-only, should not be set in DTOs for create/update
     private BigDecimal stockActual;
 
-    private Integer cantidadTexto;
+    private Integer stockCantidad;
 
-    private Integer totalEnvases;
+    private Integer cantidad;
 
     private Integer envasesRechazados;
 
     private Integer envasesAprobados;
+
+    private Integer stockSellado;
+
+    private Integer stockAbierto;
+
+    private Integer stockTerminado;
+
+    private Integer stockCuarentena;
 
     private UUID createdByUserId;
 
