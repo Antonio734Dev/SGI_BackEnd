@@ -72,18 +72,6 @@ public class StockCatalogue {
     @Column(name = "envases_aprobados", columnDefinition = "INT", nullable = false)
     private Integer envasesAprobados = 0;
 
-    @Column(name = "stock_sellado", columnDefinition = "INT", nullable = false)
-    private Integer stockSellado = 0;
-
-    @Column(name = "stock_abierto", columnDefinition = "INT", nullable = false)
-    private Integer stockAbierto = 0;
-
-    @Column(name = "stock_terminado", columnDefinition = "INT", nullable = false)
-    private Integer stockTerminado = 0;
-
-    @Column(name = "stock_cuarentena", columnDefinition = "INT", nullable = false)
-    private Integer stockCuarentena = 0;
-
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 

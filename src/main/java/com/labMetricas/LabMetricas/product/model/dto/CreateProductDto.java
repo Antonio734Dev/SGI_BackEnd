@@ -27,6 +27,15 @@ public class CreateProductDto {
     @Size(max = 100, message = "Lote must be less than 100 characters")
     private String lote;
 
+    @Size(max = 100, message = "Lote proveedor must be less than 100 characters")
+    private String loteProveedor;
+
+    @Size(max = 200, message = "Fabricante must be less than 200 characters")
+    private String fabricante;
+
+    @Size(max = 200, message = "Distribuidor must be less than 200 characters")
+    private String distribuidor;
+
     @NotNull(message = "Fecha ingreso is required")
     private LocalDate fechaIngreso;
 

@@ -40,5 +40,9 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     
     // Find by QR code and not deleted
     Optional<Product> findByQrCodeIdAndDeletedAtIsNull(Integer qrCodeId);
+    
+    // Find products by stock catalogue and status "terminado" (case insensitive)
+    List<Product> findByStockCatalogueIdAndProductStatusNameIgnoreCaseAndDeletedAtIsNull(
+        Integer stockCatalogueId, String statusName);
 }
 

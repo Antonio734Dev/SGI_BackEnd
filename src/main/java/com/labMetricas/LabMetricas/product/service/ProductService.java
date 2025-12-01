@@ -40,7 +40,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import com.google.zxing.WriterException;
@@ -96,6 +95,9 @@ public class ProductService {
             product.setProductStatus(productStatus);
             product.setCreatedByUser(currentUser);
             product.setLote(createProductDto.getLote());
+            product.setLoteProveedor(createProductDto.getLoteProveedor());
+            product.setFabricante(createProductDto.getFabricante());
+            product.setDistribuidor(createProductDto.getDistribuidor());
             product.setFecha(createProductDto.getFechaIngreso());
             product.setCaducidad(createProductDto.getFechaCaducidad());
             product.setCreatedAt(LocalDateTime.now());
@@ -157,7 +159,6 @@ public class ProductService {
                 stockCatalogue.getEnvasesAprobados() : 0;
             stockCatalogue.setEnvasesAprobados(currentEnvasesAprobados + createProductDto.getTotalEnvases());
 
-            updateStatusCounters(stockCatalogue, productStatus, createProductDto.getTotalEnvases());
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
             
             StockCatalogue updatedStockCatalogue = stockCatalogueRepository.save(stockCatalogue);
@@ -304,42 +305,55 @@ public class ProductService {
         }
     }
 
-    private void updateStatusCounters(StockCatalogue stockCatalogue, ProductStatus productStatus, int delta) {
-        if (stockCatalogue == null || productStatus == null || productStatus.getName() == null) {
-            return;
-        }
+    /**
+     * Calcula los descuentos (productos con estado "terminado") para un stock
+     */
+    private Integer calculateDescuentos(StockCatalogue stockCatalogue) {
+        try {
+            var productosTerminados = productRepository.findByStockCatalogueIdAndProductStatusNameIgnoreCaseAndDeletedAtIsNull(
+                stockCatalogue.getId(), "terminado"
+            );
 
-        String statusName = productStatus.getName().toLowerCase(Locale.ROOT);
+            if (productosTerminados.isEmpty()) {
+                return 0;
+            }
 
-        switch (statusName) {
-            case "sellado" -> {
-                int current = stockCatalogue.getStockSellado() != null ? stockCatalogue.getStockSellado() : 0;
-                stockCatalogue.setStockSellado(Math.max(0, current + delta));
+            int totalDescuentos = 0;
+            for (Product product : productosTerminados) {
+                var movimientos = productStockMovementRepository
+                    .findByStockCatalogueIdAndDeletedAtIsNull(stockCatalogue.getId());
+                
+                for (var movimiento : movimientos) {
+                    if (movimiento.getTipo() == TipoMovimiento.entrada && 
+                        movimiento.getReferencia() != null &&
+                        movimiento.getReferencia().contains("Lote " + product.getLote())) {
+                        totalDescuentos += movimiento.getCantidad().intValue();
+                        break;
+                    }
+                }
             }
-            case "abierto" -> {
-                int current = stockCatalogue.getStockAbierto() != null ? stockCatalogue.getStockAbierto() : 0;
-                stockCatalogue.setStockAbierto(Math.max(0, current + delta));
-            }
-            case "terminado" -> {
-                int current = stockCatalogue.getStockTerminado() != null ? stockCatalogue.getStockTerminado() : 0;
-                stockCatalogue.setStockTerminado(Math.max(0, current + delta));
-            }
-            case "cuarentena" -> {
-                int current = stockCatalogue.getStockCuarentena() != null ? stockCatalogue.getStockCuarentena() : 0;
-                stockCatalogue.setStockCuarentena(Math.max(0, current + delta));
-            }
-            default -> logger.warn("Unknown product status '{}' for stock counter update", productStatus.getName());
+
+            return totalDescuentos;
+        } catch (Exception e) {
+            logger.warn("Error calculating descuentos for stock catalogue {}: {}", stockCatalogue.getId(), e.getMessage());
+            return 0;
         }
     }
 
     /**
      * Convierte Product a ProductResponseDto con nombres legibles
+     * Primero datos del producto, luego datos del stock
      */
     private ProductResponseDto convertToResponseDto(Product product) {
         ProductResponseDto dto = new ProductResponseDto();
+        
+        // Información del producto (primero)
         dto.setId(product.getId());
         dto.setNombre(product.getNombre());
-        dto.setLote(product.getLote());
+        dto.setLote(product.getLote()); // Lote interno
+        dto.setLoteProveedor(product.getLoteProveedor());
+        dto.setFabricante(product.getFabricante());
+        dto.setDistribuidor(product.getDistribuidor());
         dto.setCodigo(product.getCodigo());
         dto.setFecha(product.getFecha());
         dto.setCaducidad(product.getCaducidad());
@@ -347,23 +361,7 @@ public class ProductService {
         dto.setCreatedAt(product.getCreatedAt());
         dto.setUpdatedAt(product.getUpdatedAt());
 
-        // Información del catálogo (nombres legibles)
-        if (product.getStockCatalogue() != null) {
-            dto.setStockCatalogueId(product.getStockCatalogue().getId());
-            dto.setStockCatalogueName(product.getStockCatalogue().getName());
-            dto.setStockCatalogueSku(product.getStockCatalogue().getSku());
-            dto.setStockCatalogueUnidad(product.getStockCatalogue().getUnidad());
-            dto.setCantidad(product.getStockCatalogue().getCantidad());
-            dto.setStockCantidad(product.getStockCatalogue().getStockCantidad());
-            dto.setEnvasesRechazados(product.getStockCatalogue().getEnvasesRechazados());
-            dto.setEnvasesAprobados(product.getStockCatalogue().getEnvasesAprobados());
-            dto.setStockSellado(product.getStockCatalogue().getStockSellado());
-            dto.setStockAbierto(product.getStockCatalogue().getStockAbierto());
-            dto.setStockTerminado(product.getStockCatalogue().getStockTerminado());
-            dto.setStockCuarentena(product.getStockCatalogue().getStockCuarentena());
-        }
-
-        // Información del estado (nombres legibles)
+        // Información del estado
         if (product.getProductStatus() != null) {
             dto.setProductStatusId(product.getProductStatus().getId());
             dto.setProductStatusName(product.getProductStatus().getName());
@@ -380,6 +378,26 @@ public class ProductService {
         if (product.getCreatedByUser() != null) {
             dto.setCreatedByUserId(product.getCreatedByUser().getId());
             dto.setCreatedByUserName(product.getCreatedByUser().getName());
+        }
+
+        // Información del stock (después del producto)
+        if (product.getStockCatalogue() != null) {
+            StockCatalogue stockCatalogue = product.getStockCatalogue();
+            dto.setStockCatalogueId(stockCatalogue.getId());
+            dto.setStockCatalogueName(stockCatalogue.getName());
+            dto.setStockCatalogueSku(stockCatalogue.getSku());
+            dto.setStockCatalogueUnidad(stockCatalogue.getUnidad());
+            
+            // Métricas de stock calculadas
+            Integer cantidadTotal = stockCatalogue.getStockCantidad() != null ? stockCatalogue.getStockCantidad() : 0;
+            Integer descuentos = calculateDescuentos(stockCatalogue);
+            Integer cantidadSobrante = Math.max(0, cantidadTotal - descuentos);
+            
+            dto.setCantidadTotal(cantidadTotal);
+            dto.setDescuentos(descuentos);
+            dto.setCantidadSobrante(cantidadSobrante);
+            dto.setEnvasesRechazados(stockCatalogue.getEnvasesRechazados());
+            dto.setEnvasesAprobados(stockCatalogue.getEnvasesAprobados());
         }
 
         return dto;

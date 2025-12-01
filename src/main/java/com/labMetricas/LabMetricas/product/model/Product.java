@@ -64,6 +64,15 @@ public class Product {
     @Column(name = "lote", columnDefinition = "VARCHAR(100)", nullable = false, length = 100)
     private String lote;
 
+    @Column(name = "lote_proveedor", columnDefinition = "VARCHAR(100)", length = 100)
+    private String loteProveedor;
+
+    @Column(name = "fabricante", columnDefinition = "VARCHAR(200)", length = 200)
+    private String fabricante;
+
+    @Column(name = "distribuidor", columnDefinition = "VARCHAR(200)", length = 200)
+    private String distribuidor;
+
     @Column(name = "caducidad", columnDefinition = "DATE", nullable = false)
     private LocalDate caducidad;
 

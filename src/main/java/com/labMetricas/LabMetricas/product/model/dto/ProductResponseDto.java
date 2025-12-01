@@ -16,27 +16,16 @@ import java.util.UUID;
 public class ProductResponseDto {
     private Integer id;
     
-    // Información del producto
+    // Información del producto (primero)
     private String nombre;
-    private String lote;
+    private String lote; // Lote interno
+    private String loteProveedor;
+    private String fabricante;
+    private String distribuidor;
     private String codigo;
     private LocalDate fecha;
     private LocalDate caducidad;
     private LocalDate reanalisis;
-    private Integer cantidad;
-    private Integer stockCantidad;
-    private Integer envasesRechazados;
-    private Integer envasesAprobados;
-    private Integer stockSellado;
-    private Integer stockAbierto;
-    private Integer stockTerminado;
-    private Integer stockCuarentena;
-    
-    // Información del catálogo (nombres legibles)
-    private Integer stockCatalogueId;
-    private String stockCatalogueName;
-    private String stockCatalogueSku;
-    private String stockCatalogueUnidad;
     
     // Información del estado (nombres legibles)
     private Integer productStatusId;
@@ -54,5 +43,18 @@ public class ProductResponseDto {
     // Timestamps
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    // Información del stock (después del producto)
+    private Integer stockCatalogueId;
+    private String stockCatalogueName;
+    private String stockCatalogueSku;
+    private String stockCatalogueUnidad;
+    
+    // Métricas de stock
+    private Integer cantidadTotal; // stock_cantidad (máximo acumulado)
+    private Integer descuentos; // Productos con estado "terminado"
+    private Integer cantidadSobrante; // cantidadTotal - descuentos
+    private Integer envasesRechazados;
+    private Integer envasesAprobados;
 }
 

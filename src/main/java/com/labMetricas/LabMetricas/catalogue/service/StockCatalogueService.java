@@ -3,7 +3,11 @@ package com.labMetricas.LabMetricas.catalogue.service;
 import com.labMetricas.LabMetricas.catalogue.model.StockCatalogue;
 import com.labMetricas.LabMetricas.catalogue.model.dto.StockCatalogueDto;
 import com.labMetricas.LabMetricas.catalogue.repository.StockCatalogueRepository;
+import com.labMetricas.LabMetricas.enums.TipoMovimiento;
 import com.labMetricas.LabMetricas.enums.TypeResponse;
+import com.labMetricas.LabMetricas.movement.repository.ProductStockMovementRepository;
+import com.labMetricas.LabMetricas.product.model.Product;
+import com.labMetricas.LabMetricas.product.repository.ProductRepository;
 import com.labMetricas.LabMetricas.user.model.User;
 import com.labMetricas.LabMetricas.user.repository.UserRepository;
 import com.labMetricas.LabMetricas.util.PageResponse;
@@ -34,6 +38,12 @@ public class StockCatalogueService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private ProductStockMovementRepository productStockMovementRepository;
 
     @Transactional
     public ResponseEntity<ResponseObject> createStockCatalogue(StockCatalogueDto stockCatalogueDto) {
@@ -67,14 +77,6 @@ public class StockCatalogueService {
                 stockCatalogueDto.getEnvasesRechazados() != null ? stockCatalogueDto.getEnvasesRechazados() : 0);
             stockCatalogue.setEnvasesAprobados(
                 stockCatalogueDto.getEnvasesAprobados() != null ? stockCatalogueDto.getEnvasesAprobados() : 0);
-            stockCatalogue.setStockSellado(
-                stockCatalogueDto.getStockSellado() != null ? stockCatalogueDto.getStockSellado() : 0);
-            stockCatalogue.setStockAbierto(
-                stockCatalogueDto.getStockAbierto() != null ? stockCatalogueDto.getStockAbierto() : 0);
-            stockCatalogue.setStockTerminado(
-                stockCatalogueDto.getStockTerminado() != null ? stockCatalogueDto.getStockTerminado() : 0);
-            stockCatalogue.setStockCuarentena(
-                stockCatalogueDto.getStockCuarentena() != null ? stockCatalogueDto.getStockCuarentena() : 0);
             stockCatalogue.setCreatedByUser(currentUser);
             stockCatalogue.setCreatedAt(LocalDateTime.now());
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
@@ -131,18 +133,6 @@ public class StockCatalogueService {
             }
             if (stockCatalogueDto.getEnvasesAprobados() != null) {
                 existingStockCatalogue.setEnvasesAprobados(stockCatalogueDto.getEnvasesAprobados());
-            }
-            if (stockCatalogueDto.getStockSellado() != null) {
-                existingStockCatalogue.setStockSellado(stockCatalogueDto.getStockSellado());
-            }
-            if (stockCatalogueDto.getStockAbierto() != null) {
-                existingStockCatalogue.setStockAbierto(stockCatalogueDto.getStockAbierto());
-            }
-            if (stockCatalogueDto.getStockTerminado() != null) {
-                existingStockCatalogue.setStockTerminado(stockCatalogueDto.getStockTerminado());
-            }
-            if (stockCatalogueDto.getStockCuarentena() != null) {
-                existingStockCatalogue.setStockCuarentena(stockCatalogueDto.getStockCuarentena());
             }
             existingStockCatalogue.setUpdatedAt(LocalDateTime.now());
 
@@ -234,6 +224,45 @@ public class StockCatalogueService {
         }
     }
 
+    /**
+     * Calcula los descuentos (productos con estado "terminado") para un stock
+     * Suma las cantidades de movimientos de entrada iniciales de productos terminados
+     */
+    private Integer calculateDescuentos(StockCatalogue stockCatalogue) {
+        try {
+            // Buscar productos con estado "terminado" para este stock
+            var productosTerminados = productRepository.findByStockCatalogueIdAndProductStatusNameIgnoreCaseAndDeletedAtIsNull(
+                stockCatalogue.getId(), "terminado"
+            );
+
+            if (productosTerminados.isEmpty()) {
+                return 0;
+            }
+
+            // Sumar las cantidades de movimientos de entrada iniciales para estos productos
+            int totalDescuentos = 0;
+            for (Product product : productosTerminados) {
+                // Buscar movimientos de entrada con referencia que contiene el lote
+                var movimientos = productStockMovementRepository
+                    .findByStockCatalogueIdAndDeletedAtIsNull(stockCatalogue.getId());
+                
+                for (var movimiento : movimientos) {
+                    if (movimiento.getTipo() == TipoMovimiento.entrada && 
+                        movimiento.getReferencia() != null &&
+                        movimiento.getReferencia().contains("Lote " + product.getLote())) {
+                        totalDescuentos += movimiento.getCantidad().intValue();
+                        break; // Solo contar el movimiento inicial de cada producto
+                    }
+                }
+            }
+
+            return totalDescuentos;
+        } catch (Exception e) {
+            logger.warn("Error calculating descuentos for stock catalogue {}: {}", stockCatalogue.getId(), e.getMessage());
+            return 0;
+        }
+    }
+
     // Helper method to convert StockCatalogue to StockCatalogueDto
     private StockCatalogueDto convertToDto(StockCatalogue stockCatalogue) {
         StockCatalogueDto dto = new StockCatalogueDto();
@@ -247,10 +276,15 @@ public class StockCatalogueService {
         dto.setCantidad(stockCatalogue.getCantidad());
         dto.setEnvasesRechazados(stockCatalogue.getEnvasesRechazados());
         dto.setEnvasesAprobados(stockCatalogue.getEnvasesAprobados());
-        dto.setStockSellado(stockCatalogue.getStockSellado());
-        dto.setStockAbierto(stockCatalogue.getStockAbierto());
-        dto.setStockTerminado(stockCatalogue.getStockTerminado());
-        dto.setStockCuarentena(stockCatalogue.getStockCuarentena());
+        
+        // Calcular descuentos y cantidad sobrante
+        Integer descuentos = calculateDescuentos(stockCatalogue);
+        Integer cantidadTotal = stockCatalogue.getStockCantidad() != null ? stockCatalogue.getStockCantidad() : 0;
+        Integer cantidadSobrante = Math.max(0, cantidadTotal - descuentos);
+        
+        dto.setDescuentos(descuentos);
+        dto.setCantidadSobrante(cantidadSobrante);
+        
         dto.setCreatedAt(stockCatalogue.getCreatedAt());
         dto.setUpdatedAt(stockCatalogue.getUpdatedAt());
         dto.setDeletedAt(stockCatalogue.getDeletedAt());

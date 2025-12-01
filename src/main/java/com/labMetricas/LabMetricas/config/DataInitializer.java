@@ -283,22 +283,26 @@ public class DataInitializer implements CommandLineRunner {
             // Create sample products
             createProductWithQrAndMovement("LOTE-AZU-2024-001", azucar, sellado, 
                 LocalDate.now().minusDays(5), LocalDate.now().plusYears(1), 
-                50, 1, adminUser);
+                50, 1, adminUser,
+                "PROV-AZU-2024-001", "Azucarera del Sur S.A. de C.V.", "Distribuidora Central México");
 
             createProductWithQrAndMovement("LOTE-AZU-2024-002", azucar, sellado, 
                 LocalDate.now().minusDays(3), LocalDate.now().plusYears(1), 
-                50, 1, adminUser);
+                50, 1, adminUser,
+                "PROV-AZU-2024-002", "Azucarera del Sur S.A. de C.V.", "Distribuidora Central México");
 
             if (harina != null && abierto != null) {
                 createProductWithQrAndMovement("LOTE-HAR-2024-001", harina, abierto, 
                     LocalDate.now().minusDays(10), LocalDate.now().plusMonths(6), 
-                    25, 2, adminUser);
+                    25, 2, adminUser,
+                    "PROV-HAR-2024-001", "Molinos del Norte S.A.", "Distribuidora Alimentos Premium");
             }
 
             if (aceite != null && cuarentena != null) {
                 createProductWithQrAndMovement("LOTE-ACE-2024-001", aceite, cuarentena, 
                     LocalDate.now().minusDays(2), LocalDate.now().plusMonths(12), 
-                    12, 12, adminUser);
+                    12, 12, adminUser,
+                    "PROV-ACE-2024-001", "Aceites Vegetales Nacionales S.A.", "Distribuidora Oleaginosas S.A.");
             }
 
             logger.info("Products initialized successfully");
@@ -309,7 +313,8 @@ public class DataInitializer implements CommandLineRunner {
 
     private void createProductWithQrAndMovement(String lote, StockCatalogue stockCatalogue, 
             ProductStatus productStatus, LocalDate fechaIngreso, LocalDate fechaCaducidad, 
-            Integer cantidad, Integer totalEnvases, User createdByUser) {
+            Integer cantidad, Integer totalEnvases, User createdByUser,
+            String loteProveedor, String fabricante, String distribuidor) {
         try {
             // Create Product
             Product product = new Product();
@@ -317,6 +322,9 @@ public class DataInitializer implements CommandLineRunner {
             product.setProductStatus(productStatus);
             product.setCreatedByUser(createdByUser);
             product.setLote(lote);
+            product.setLoteProveedor(loteProveedor);
+            product.setFabricante(fabricante);
+            product.setDistribuidor(distribuidor);
             product.setFecha(fechaIngreso);
             product.setCaducidad(fechaCaducidad);
             product.setNombre(stockCatalogue.getName());
@@ -362,7 +370,6 @@ public class DataInitializer implements CommandLineRunner {
             Integer currentEnvasesAprobados = stockCatalogue.getEnvasesAprobados() != null ? 
                 stockCatalogue.getEnvasesAprobados() : 0;
             stockCatalogue.setEnvasesAprobados(currentEnvasesAprobados + totalEnvases);
-            incrementStatusCounter(stockCatalogue, productStatus, totalEnvases);
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
             stockCatalogueRepository.save(stockCatalogue);
 
@@ -403,23 +410,5 @@ public class DataInitializer implements CommandLineRunner {
         return sku + "-" + lote + "-" + System.currentTimeMillis() % 10000;
     }
 
-    private void incrementStatusCounter(StockCatalogue stockCatalogue, ProductStatus status, int delta) {
-        if (stockCatalogue == null || status == null || status.getName() == null) {
-            return;
-        }
-
-        String name = status.getName().toLowerCase();
-        switch (name) {
-            case "sellado" -> stockCatalogue.setStockSellado(
-                Math.max(0, (stockCatalogue.getStockSellado() != null ? stockCatalogue.getStockSellado() : 0) + delta));
-            case "abierto" -> stockCatalogue.setStockAbierto(
-                Math.max(0, (stockCatalogue.getStockAbierto() != null ? stockCatalogue.getStockAbierto() : 0) + delta));
-            case "terminado" -> stockCatalogue.setStockTerminado(
-                Math.max(0, (stockCatalogue.getStockTerminado() != null ? stockCatalogue.getStockTerminado() : 0) + delta));
-            case "cuarentena" -> stockCatalogue.setStockCuarentena(
-                Math.max(0, (stockCatalogue.getStockCuarentena() != null ? stockCatalogue.getStockCuarentena() : 0) + delta));
-            default -> logger.warn("Unknown status '{}' when initializing counters", status.getName());
-        }
-    }
 
 } 

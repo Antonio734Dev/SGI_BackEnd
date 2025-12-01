@@ -44,13 +44,9 @@ public class StockCatalogueDto {
 
     private Integer envasesAprobados;
 
-    private Integer stockSellado;
-
-    private Integer stockAbierto;
-
-    private Integer stockTerminado;
-
-    private Integer stockCuarentena;
+    // Campos calculados
+    private Integer descuentos; // Productos con estado "terminado"
+    private Integer cantidadSobrante; // stock_cantidad - descuentos
 
     private UUID createdByUserId;
 
