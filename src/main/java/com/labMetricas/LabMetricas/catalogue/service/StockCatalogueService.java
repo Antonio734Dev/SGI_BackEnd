@@ -10,16 +10,11 @@ import com.labMetricas.LabMetricas.product.model.Product;
 import com.labMetricas.LabMetricas.product.repository.ProductRepository;
 import com.labMetricas.LabMetricas.user.model.User;
 import com.labMetricas.LabMetricas.user.repository.UserRepository;
-import com.labMetricas.LabMetricas.util.PageResponse;
 import com.labMetricas.LabMetricas.util.ResponseObject;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -77,6 +72,7 @@ public class StockCatalogueService {
                 stockCatalogueDto.getEnvasesRechazados() != null ? stockCatalogueDto.getEnvasesRechazados() : 0);
             stockCatalogue.setEnvasesAprobados(
                 stockCatalogueDto.getEnvasesAprobados() != null ? stockCatalogueDto.getEnvasesAprobados() : 0);
+            stockCatalogue.setStatus(stockCatalogueDto.getStatus() != null ? stockCatalogueDto.getStatus() : true);
             stockCatalogue.setCreatedByUser(currentUser);
             stockCatalogue.setCreatedAt(LocalDateTime.now());
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
@@ -134,6 +130,9 @@ public class StockCatalogueService {
             if (stockCatalogueDto.getEnvasesAprobados() != null) {
                 existingStockCatalogue.setEnvasesAprobados(stockCatalogueDto.getEnvasesAprobados());
             }
+            if (stockCatalogueDto.getStatus() != null) {
+                existingStockCatalogue.setStatus(stockCatalogueDto.getStatus());
+            }
             existingStockCatalogue.setUpdatedAt(LocalDateTime.now());
 
             // Save updated stock catalogue
@@ -157,8 +156,8 @@ public class StockCatalogueService {
 
     public ResponseEntity<ResponseObject> getStockCatalogueById(Integer id) {
         try {
-            StockCatalogue stockCatalogue = stockCatalogueRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new RuntimeException("Stock catalogue not found"));
+            StockCatalogue stockCatalogue = stockCatalogueRepository.findByIdAndStatusTrue(id)
+                .orElseThrow(() -> new RuntimeException("Stock catalogue not found or inactive"));
 
             return ResponseEntity.ok(
                 new ResponseObject("Stock catalogue retrieved successfully", convertToDto(stockCatalogue), TypeResponse.SUCCESS)
@@ -171,26 +170,31 @@ public class StockCatalogueService {
         }
     }
 
-    public ResponseEntity<ResponseObject> getAllStockCatalogues(int page, int size, String search) {
+    public ResponseEntity<ResponseObject> getAllStockCatalogues(String search) {
         try {
-            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-            Page<StockCatalogue> stockCataloguesPage;
+            java.util.List<StockCatalogue> stockCatalogues;
 
             if (search != null && !search.trim().isEmpty()) {
-                // Search by name
-                stockCataloguesPage = stockCatalogueRepository.findByDeletedAtIsNullAndNameContainingIgnoreCase(search.trim(), pageable);
+                // Search by name (all statuses)
+                stockCatalogues = stockCatalogueRepository.findAll().stream()
+                    .filter(sc -> sc.getName() != null && 
+                           sc.getName().toLowerCase().contains(search.trim().toLowerCase()))
+                    .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                    .collect(java.util.stream.Collectors.toList());
             } else {
-                // Get all active
-                stockCataloguesPage = stockCatalogueRepository.findByDeletedAtIsNull(pageable);
+                // Get all (all statuses, ordered by createdAt DESC)
+                stockCatalogues = stockCatalogueRepository.findAll().stream()
+                    .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                    .collect(java.util.stream.Collectors.toList());
             }
 
-            // Create paginated response
-            PageResponse<StockCatalogueDto> pageResponse = new PageResponse<>(
-                stockCataloguesPage.map(this::convertToDto)
-            );
+            // Convert to DTOs
+            java.util.List<StockCatalogueDto> dtos = stockCatalogues.stream()
+                .map(this::convertToDto)
+                .collect(java.util.stream.Collectors.toList());
 
             return ResponseEntity.ok(
-                new ResponseObject("Stock catalogues retrieved successfully", pageResponse, TypeResponse.SUCCESS)
+                new ResponseObject("Stock catalogues retrieved successfully", dtos, TypeResponse.SUCCESS)
             );
         } catch (Exception e) {
             logger.error("Error retrieving stock catalogues", e);
@@ -203,23 +207,50 @@ public class StockCatalogueService {
     @Transactional
     public ResponseEntity<ResponseObject> deleteStockCatalogue(Integer id) {
         try {
-            StockCatalogue stockCatalogue = stockCatalogueRepository.findByIdAndDeletedAtIsNull(id)
+            StockCatalogue stockCatalogue = stockCatalogueRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Stock catalogue not found"));
 
-            // Soft delete
-            stockCatalogue.setDeletedAt(LocalDateTime.now());
+            // Change status to inactive instead of soft delete
+            stockCatalogue.setStatus(false);
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
             stockCatalogueRepository.save(stockCatalogue);
 
-            logger.info("Stock catalogue deleted successfully: {}", stockCatalogue.getName());
+            logger.info("Stock catalogue status changed to inactive: {}", stockCatalogue.getName());
 
             return ResponseEntity.ok(
-                new ResponseObject("Stock catalogue deleted successfully", null, TypeResponse.SUCCESS)
+                new ResponseObject("Stock catalogue status changed to inactive successfully", convertToDto(stockCatalogue), TypeResponse.SUCCESS)
             );
         } catch (Exception e) {
-            logger.error("Error deleting stock catalogue", e);
+            logger.error("Error changing stock catalogue status", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                new ResponseObject("Error deleting stock catalogue: " + e.getMessage(), null, TypeResponse.ERROR)
+                new ResponseObject("Error changing stock catalogue status: " + e.getMessage(), null, TypeResponse.ERROR)
+            );
+        }
+    }
+
+    @Transactional
+    public ResponseEntity<ResponseObject> toggleStockCatalogueStatus(Integer id) {
+        try {
+            StockCatalogue stockCatalogue = stockCatalogueRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Stock catalogue not found"));
+
+            boolean oldStatus = stockCatalogue.getStatus();
+            stockCatalogue.setStatus(!stockCatalogue.getStatus());
+            stockCatalogue.setUpdatedAt(LocalDateTime.now());
+            StockCatalogue updatedStockCatalogue = stockCatalogueRepository.save(stockCatalogue);
+
+            String statusMessage = updatedStockCatalogue.getStatus() ? "activated" : "deactivated";
+            logger.info("Stock catalogue {} status changed from {} to {}", 
+                updatedStockCatalogue.getName(), oldStatus, updatedStockCatalogue.getStatus());
+
+            return ResponseEntity.ok(
+                new ResponseObject("Stock catalogue " + statusMessage + " successfully", 
+                    convertToDto(updatedStockCatalogue), TypeResponse.SUCCESS)
+            );
+        } catch (Exception e) {
+            logger.error("Error toggling stock catalogue status", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ResponseObject("Error toggling stock catalogue status: " + e.getMessage(), null, TypeResponse.ERROR)
             );
         }
     }
@@ -284,6 +315,7 @@ public class StockCatalogueService {
         
         dto.setDescuentos(descuentos);
         dto.setCantidadSobrante(cantidadSobrante);
+        dto.setStatus(stockCatalogue.getStatus());
         
         dto.setCreatedAt(stockCatalogue.getCreatedAt());
         dto.setUpdatedAt(stockCatalogue.getUpdatedAt());

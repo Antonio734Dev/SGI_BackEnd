@@ -48,6 +48,8 @@ public class StockCatalogueDto {
     private Integer descuentos; // Productos con estado "terminado"
     private Integer cantidadSobrante; // stock_cantidad - descuentos
 
+    private Boolean status; // Estado activo/inactivo
+
     private UUID createdByUserId;
 
     private String createdByUserName;

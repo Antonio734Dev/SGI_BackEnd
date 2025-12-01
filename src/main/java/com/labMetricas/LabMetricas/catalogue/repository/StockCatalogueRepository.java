@@ -31,5 +31,17 @@ public interface StockCatalogueRepository extends JpaRepository<StockCatalogue, 
     
     // Find by id and not deleted
     Optional<StockCatalogue> findByIdAndDeletedAtIsNull(Integer id);
+    
+    // Find all active catalogues (status = true)
+    List<StockCatalogue> findByStatusTrue();
+    
+    // Find all active with pagination
+    Page<StockCatalogue> findByStatusTrue(Pageable pageable);
+    
+    // Find by id and active
+    Optional<StockCatalogue> findByIdAndStatusTrue(Integer id);
+    
+    // Find by name containing (case insensitive) and active with pagination
+    Page<StockCatalogue> findByStatusTrueAndNameContainingIgnoreCase(String name, Pageable pageable);
 }
 

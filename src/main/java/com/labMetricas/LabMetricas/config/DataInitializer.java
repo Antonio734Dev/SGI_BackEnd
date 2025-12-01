@@ -247,6 +247,7 @@ public class DataInitializer implements CommandLineRunner {
             stockCatalogue.setStockActual(BigDecimal.ZERO);
             stockCatalogue.setCantidad(cantidad != null ? cantidad : 0);
             stockCatalogue.setStockCantidad(0);
+            stockCatalogue.setStatus(true); // Activo por defecto
             stockCatalogue.setCreatedByUser(createdByUser);
             stockCatalogue.setCreatedAt(LocalDateTime.now());
             stockCatalogue.setUpdatedAt(LocalDateTime.now());

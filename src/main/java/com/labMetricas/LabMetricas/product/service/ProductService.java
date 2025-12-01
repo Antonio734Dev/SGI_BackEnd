@@ -9,6 +9,7 @@ import com.labMetricas.LabMetricas.movement.repository.ProductStockMovementRepos
 import com.labMetricas.LabMetricas.product.model.Product;
 import com.labMetricas.LabMetricas.product.model.dto.CreateProductDto;
 import com.labMetricas.LabMetricas.product.model.dto.ProductResponseDto;
+import com.labMetricas.LabMetricas.product.model.dto.UpdateProductDto;
 import com.labMetricas.LabMetricas.product.repository.ProductRepository;
 import com.labMetricas.LabMetricas.qrcode.model.QrCode;
 import com.labMetricas.LabMetricas.qrcode.repository.QrCodeRepository;
@@ -262,6 +263,75 @@ public class ProductService {
             logger.error("Error retrieving product by QR hash", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 new ResponseObject("Error retrieving product", null, TypeResponse.ERROR)
+            );
+        }
+    }
+
+    @Transactional
+    public ResponseEntity<ResponseObject> updateProduct(UpdateProductDto updateProductDto) {
+        try {
+            logger.info("Starting product update transaction for product ID: {}", updateProductDto.getId());
+
+            // Buscar producto existente
+            Product existingProduct = productRepository.findByIdAndDeletedAtIsNull(updateProductDto.getId())
+                .orElseThrow(() -> new RuntimeException("Product not found or deleted"));
+
+            // Validar y actualizar stock catalogue si se proporciona
+            if (updateProductDto.getStockCatalogueId() != null) {
+                StockCatalogue stockCatalogue = stockCatalogueRepository.findByIdAndDeletedAtIsNull(updateProductDto.getStockCatalogueId())
+                    .orElseThrow(() -> new RuntimeException("Stock catalogue not found or deleted"));
+                existingProduct.setStockCatalogue(stockCatalogue);
+            }
+
+            // Validar y actualizar product status si se proporciona (permite cambiar estado)
+            if (updateProductDto.getProductStatusId() != null) {
+                ProductStatus productStatus = productStatusRepository.findByIdAndDeletedAtIsNull(updateProductDto.getProductStatusId())
+                    .orElseThrow(() -> new RuntimeException("Product status not found or deleted"));
+                existingProduct.setProductStatus(productStatus);
+            }
+
+            // Actualizar campos opcionales
+            if (updateProductDto.getLote() != null && !updateProductDto.getLote().trim().isEmpty()) {
+                existingProduct.setLote(updateProductDto.getLote());
+            }
+            if (updateProductDto.getLoteProveedor() != null) {
+                existingProduct.setLoteProveedor(updateProductDto.getLoteProveedor());
+            }
+            if (updateProductDto.getFabricante() != null) {
+                existingProduct.setFabricante(updateProductDto.getFabricante());
+            }
+            if (updateProductDto.getDistribuidor() != null) {
+                existingProduct.setDistribuidor(updateProductDto.getDistribuidor());
+            }
+            if (updateProductDto.getFechaIngreso() != null) {
+                existingProduct.setFecha(updateProductDto.getFechaIngreso());
+            }
+            if (updateProductDto.getFechaCaducidad() != null) {
+                existingProduct.setCaducidad(updateProductDto.getFechaCaducidad());
+            }
+            if (updateProductDto.getReanalisis() != null) {
+                existingProduct.setReanalisis(updateProductDto.getReanalisis());
+            }
+
+            existingProduct.setUpdatedAt(LocalDateTime.now());
+
+            Product updatedProduct = productRepository.save(existingProduct);
+            ProductResponseDto responseDto = convertToResponseDto(updatedProduct);
+
+            logger.info("Product updated successfully: Product ID {}", updatedProduct.getId());
+
+            return ResponseEntity.ok(
+                new ResponseObject("Product updated successfully", responseDto, TypeResponse.SUCCESS)
+            );
+        } catch (RuntimeException e) {
+            logger.error("Validation error during product update: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(
+                new ResponseObject("Validation error: " + e.getMessage(), null, TypeResponse.ERROR)
+            );
+        } catch (Exception e) {
+            logger.error("Error updating product", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ResponseObject("Error updating product: " + e.getMessage(), null, TypeResponse.ERROR)
             );
         }
     }

@@ -57,16 +57,14 @@ public class StockCatalogueController {
 
     @GetMapping
     public ResponseEntity<ResponseObject> getAllStockCatalogues(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String search) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         
         // Log the attempt
-        logger.info("User {} attempting to retrieve stock catalogues - page: {}, size: {}, search: {}", 
-            auth.getName(), page, size, search);
+        logger.info("User {} attempting to retrieve all stock catalogues - search: {}", 
+            auth.getName(), search);
         
-        return stockCatalogueService.getAllStockCatalogues(page, size, search);
+        return stockCatalogueService.getAllStockCatalogues(search);
     }
 
     @DeleteMapping("/{id}")
@@ -74,9 +72,19 @@ public class StockCatalogueController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         
         // Log the attempt
-        logger.info("User {} attempting to delete stock catalogue with id {}", auth.getName(), id);
+        logger.info("User {} attempting to deactivate stock catalogue with id {}", auth.getName(), id);
         
         return stockCatalogueService.deleteStockCatalogue(id);
+    }
+
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<ResponseObject> toggleStockCatalogueStatus(@PathVariable Integer id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        
+        // Log the attempt
+        logger.info("User {} attempting to toggle status of stock catalogue with id {}", auth.getName(), id);
+        
+        return stockCatalogueService.toggleStockCatalogueStatus(id);
     }
 }
 

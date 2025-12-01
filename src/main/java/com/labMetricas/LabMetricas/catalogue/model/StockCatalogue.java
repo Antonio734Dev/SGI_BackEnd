@@ -72,6 +72,9 @@ public class StockCatalogue {
     @Column(name = "envases_aprobados", columnDefinition = "INT", nullable = false)
     private Integer envasesAprobados = 0;
 
+    @Column(name = "status", columnDefinition = "TINYINT(1)", nullable = false)
+    private Boolean status = true;
+
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 

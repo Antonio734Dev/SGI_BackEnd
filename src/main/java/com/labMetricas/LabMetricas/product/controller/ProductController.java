@@ -1,6 +1,7 @@
 package com.labMetricas.LabMetricas.product.controller;
 
 import com.labMetricas.LabMetricas.product.model.dto.CreateProductDto;
+import com.labMetricas.LabMetricas.product.model.dto.UpdateProductDto;
 import com.labMetricas.LabMetricas.product.service.ProductService;
 import com.labMetricas.LabMetricas.util.ResponseObject;
 import jakarta.validation.Valid;
@@ -37,6 +38,17 @@ public class ProductController {
             auth.getName(), createProductDto.getLote());
         
         return productService.createProduct(createProductDto);
+    }
+
+    @PutMapping
+    public ResponseEntity<ResponseObject> updateProduct(@Valid @RequestBody UpdateProductDto updateProductDto) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        
+        // Log the attempt
+        logger.info("User {} attempting to update product with id {}", 
+            auth.getName(), updateProductDto.getId());
+        
+        return productService.updateProduct(updateProductDto);
     }
 
     @GetMapping("/qr/{hash}")
