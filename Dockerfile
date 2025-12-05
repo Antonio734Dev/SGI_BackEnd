@@ -12,7 +12,7 @@ COPY pom.xml .
 # Make mvnw executable
 RUN chmod +x ./mvnw
 
-# Download dependencies
+# Download dependencies (cache layer for better rebuild performance)
 RUN ./mvnw dependency:go-offline -B
 
 # Copy source code
@@ -21,8 +21,10 @@ COPY src ./src
 # Build the application
 RUN ./mvnw clean package -DskipTests
 
-# Expose port
-EXPOSE 8080
+# Expose port (Render will inject PORT variable, default to 8080)
+EXPOSE ${PORT:-8080}
 
-# Run the application
-CMD ["java", "-jar", "target/LabMetricas-0.0.1-SNAPSHOT.jar", "--spring.profiles.active=prod"]
+# Run the application with production profile
+# Render injects PORT environment variable automatically
+# Using shell form to allow environment variable substitution
+CMD ["sh", "-c", "java -jar -Dserver.port=${PORT:-8080} target/LabMetricas-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod"]
