@@ -27,6 +27,11 @@ SPRING_MAIL_USERNAME=antonio734contacto@gmail.com
 
 # Frontend URL for CORS
 FRONTEND_URL=https://sgi-front-l5kqu8w9w-antonios-projects-8bf8b09e.vercel.app/
+
+# DDL Strategy (IMPORTANTE: Usar 'create' la primera vez, luego cambiar a 'update')
+# Primera vez: DDL_STRATEGY=create (crea todas las tablas)
+# Después: DDL_STRATEGY=update (preserva datos y solo actualiza esquema)
+DDL_STRATEGY=create
 ```
 
 ## Instrucciones de Configuración
@@ -59,9 +64,21 @@ En tu caso:
 jdbc:postgresql://dpg-d4pj7rmuk2gs73f68kq0-a:5432/sgi_database_0p0l
 ```
 
+## ⚠️ IMPORTANTE: Estrategia DDL
+
+**Primera vez (crear tablas):**
+- Configura `DDL_STRATEGY=create` en las variables de entorno
+- Esto creará todas las tablas desde cero
+
+**Después del primer despliegue exitoso:**
+- **CAMBIA** `DDL_STRATEGY=update` para preservar los datos
+- Con `update`, Hibernate solo actualizará el esquema sin borrar datos
+
 ## Verificación
 
 Después de configurar las variables de entorno:
 1. Reinicia el servicio en Render
 2. Verifica los logs para confirmar que la conexión a PostgreSQL es exitosa
 3. La aplicación debería iniciar con el perfil `prod` y conectarse a la base de datos
+4. Verifica que las tablas se crearon correctamente en PostgreSQL
+5. **Después del primer despliegue exitoso, cambia `DDL_STRATEGY=update`**

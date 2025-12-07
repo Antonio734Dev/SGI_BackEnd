@@ -51,7 +51,7 @@ public class StockCatalogue {
     private String description;
 
     @ManyToOne
-    @JoinColumn(name = "created_by_user_id", columnDefinition = "BINARY(16)")
+    @JoinColumn(name = "created_by_user_id", columnDefinition = "UUID")
     private User createdByUser;
 
     @Column(name = "stock_actual", columnDefinition = "DECIMAL(10,2)", nullable = false, precision = 10, scale = 2)
@@ -72,13 +72,13 @@ public class StockCatalogue {
     @Column(name = "envases_aprobados", columnDefinition = "INT", nullable = false)
     private Integer envasesAprobados = 0;
 
-    @Column(name = "status", columnDefinition = "TINYINT(1)", nullable = false)
+    @Column(name = "status", columnDefinition = "BOOLEAN", nullable = false)
     private Boolean status = true;
 
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")

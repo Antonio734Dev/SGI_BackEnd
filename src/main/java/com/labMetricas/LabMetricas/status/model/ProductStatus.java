@@ -40,13 +40,13 @@ public class ProductStatus {
     private String description;
 
     @ManyToOne
-    @JoinColumn(name = "created_by_user_id", columnDefinition = "BINARY(16)")
+    @JoinColumn(name = "created_by_user_id", columnDefinition = "UUID")
     private User createdByUser;
 
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")

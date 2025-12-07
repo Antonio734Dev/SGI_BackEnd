@@ -34,7 +34,7 @@ public class ProductStockMovement {
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false, columnDefinition = "BINARY(16)")
+    @JoinColumn(name = "user_id", nullable = false, columnDefinition = "UUID")
     private User user;
 
     @ManyToOne
@@ -42,7 +42,7 @@ public class ProductStockMovement {
     private StockCatalogue stockCatalogue;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo", nullable = false, columnDefinition = "ENUM('entrada', 'salida', 'ajuste')")
+    @Column(name = "tipo", nullable = false, columnDefinition = "VARCHAR(20)")
     private TipoMovimiento tipo;
 
     @Column(name = "cantidad", columnDefinition = "DECIMAL(10,2)", nullable = false, precision = 10, scale = 2)
@@ -57,7 +57,7 @@ public class ProductStockMovement {
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
