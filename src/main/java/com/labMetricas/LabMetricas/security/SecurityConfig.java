@@ -120,13 +120,14 @@ public class SecurityConfig {
             ? frontendUrl.substring(0, frontendUrl.length() - 1) 
             : frontendUrl;
         
-        // Lista de orígenes permitidos
+        // Lista de orígenes permitidos (incluyendo todas las URLs de Vercel)
         List<String> allowedOrigins = Arrays.asList(
             frontendOrigin,
             "http://localhost:3000",
             "http://localhost:5173",
             "http://localhost:8080",
-            "https://sgi-front-end-git-main-antonios-projects-8bf8b09e.vercel.app"
+            "https://sgi-front-end-git-main-antonios-projects-8bf8b09e.vercel.app",
+            "https://sgi-front-end-gules.vercel.app"
         );
         
         configuration.setAllowedOrigins(allowedOrigins);
