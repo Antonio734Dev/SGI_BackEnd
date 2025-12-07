@@ -25,8 +25,8 @@ RESEND_API_KEY=re_6e3NgUUV_DGEpGtUsY1idpJzuAAE3c1bE
 RESEND_DEFAULT_SENDER=onboarding@resend.dev
 SPRING_MAIL_USERNAME=antonio734contacto@gmail.com
 
-# Frontend URL for CORS
-FRONTEND_URL=https://sgi-front-l5kqu8w9w-antonios-projects-8bf8b09e.vercel.app/
+# Frontend URL for CORS (sin barra final)
+FRONTEND_URL=https://sgi-front-end-git-main-antonios-projects-8bf8b09e.vercel.app
 
 # DDL Strategy (IMPORTANTE: Usar 'create' la primera vez, luego cambiar a 'update')
 # Primera vez: DDL_STRATEGY=create (crea todas las tablas)

@@ -21,6 +21,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +39,9 @@ public class SecurityConfig {
 
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
+
+    @Value("${frontend.url:http://localhost:3000}")
+    private String frontendUrl;
 
     private final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
@@ -71,6 +75,7 @@ public class SecurityConfig {
             .and()
             .authorizeHttpRequests(auth -> auth
                 // Endpoints públicos
+                .requestMatchers("/api/health").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
@@ -111,19 +116,33 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
+        
+        // Obtener la URL del frontend desde la configuración
+        String frontendOrigin = frontendUrl.endsWith("/") 
+            ? frontendUrl.substring(0, frontendUrl.length() - 1) 
+            : frontendUrl;
+        
+        // Lista de orígenes permitidos
+        List<String> allowedOrigins = Arrays.asList(
+            frontendOrigin,
             "http://localhost:3000",
             "http://localhost:5173",
-            "http://localhost:8080"
-        ));
+            "http://localhost:8080",
+            "https://sgi-front-end-git-main-antonios-projects-8bf8b09e.vercel.app"
+        );
+        
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
-        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowedHeaders(Arrays.asList("*")); // Permitir todos los headers
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
+        
+        log.info("CORS configured with allowed origins: {}", allowedOrigins);
+        
         return source;
     }
 } 
