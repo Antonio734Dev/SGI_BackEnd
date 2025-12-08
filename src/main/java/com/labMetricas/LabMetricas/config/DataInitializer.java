@@ -104,6 +104,15 @@ public class DataInitializer implements CommandLineRunner {
             "Administrador del Sistema"
         );
 
+        // Administrador del Sistema - Creparits Dev
+        createUserIfNotExists(
+            "Creparits Dev", 
+            "creparitsdev@gmail.com", 
+            "Admin2024#Secure", 
+            "ADMIN",
+            "Administrador del Sistema"
+        );
+
         // Supervisor
         createUserIfNotExists(
             "Supervisor UTEZ", 
