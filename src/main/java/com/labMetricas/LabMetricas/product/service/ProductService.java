@@ -18,6 +18,8 @@ import com.labMetricas.LabMetricas.status.repository.ProductStatusRepository;
 import com.labMetricas.LabMetricas.user.model.User;
 import com.labMetricas.LabMetricas.user.repository.UserRepository;
 import com.labMetricas.LabMetricas.qrcode.service.QrCodeService;
+import com.labMetricas.LabMetricas.auditLog.model.AuditLog;
+import com.labMetricas.LabMetricas.auditLog.repository.AuditLogRepository;
 import com.labMetricas.LabMetricas.util.PageResponse;
 import com.labMetricas.LabMetricas.util.ResponseObject;
 import jakarta.transaction.Transactional;
@@ -42,6 +44,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.google.zxing.WriterException;
 
@@ -69,6 +72,36 @@ public class ProductService {
 
     @Autowired
     private QrCodeService qrCodeService;
+
+    @Autowired
+    private AuditLogRepository auditLogRepository;
+
+    // Método helper para crear logs de auditoría
+    private void createAuditLog(String action) {
+        try {
+            // Obtener el usuario actual autenticado
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            User currentUser = null;
+            
+            if (authentication != null && authentication.isAuthenticated()) {
+                String email = authentication.getName();
+                Optional<User> userOpt = userRepository.findByEmail(email);
+                currentUser = userOpt.orElse(null);
+            }
+            
+            AuditLog auditLog = new AuditLog();
+            auditLog.setAction(action);
+            auditLog.setUser(currentUser);
+            auditLog.setCreatedAt(LocalDateTime.now());
+            auditLogRepository.save(auditLog);
+            
+            logger.debug("Audit log created: {} by user: {}", action, 
+                currentUser != null ? currentUser.getEmail() : "ANONYMOUS");
+        } catch (Exception e) {
+            logger.error("Error creating audit log: {}", action, e);
+            // No lanzar excepción para no interrumpir el flujo principal
+        }
+    }
 
     @Transactional
     public ResponseEntity<ResponseObject> createProduct(CreateProductDto createProductDto) {
@@ -174,6 +207,12 @@ public class ProductService {
             responseData.put("stockActual", updatedStockCatalogue.getStockActual());
 
             logger.info("Product creation transaction completed successfully for lote: {}", createProductDto.getLote());
+
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se agregó un producto: Lote %s (%s) - Catálogo: %s", 
+                createProductDto.getLote(), 
+                savedProduct.getNombre(),
+                stockCatalogue.getName()));
 
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ResponseObject("Product created successfully", responseData, TypeResponse.SUCCESS)
@@ -320,6 +359,13 @@ public class ProductService {
 
             logger.info("Product updated successfully: Product ID {}", updatedProduct.getId());
 
+            // Registrar log de auditoría
+            String statusInfo = updatedProduct.getProductStatus() != null 
+                ? String.format(" - Estado: %s", updatedProduct.getProductStatus().getName())
+                : "";
+            createAuditLog(String.format("Se actualizó el producto: Lote %s (%s) - ID: %d%s", 
+                updatedProduct.getLote(), updatedProduct.getNombre(), updatedProduct.getId(), statusInfo));
+
             return ResponseEntity.ok(
                 new ResponseObject("Product updated successfully", responseDto, TypeResponse.SUCCESS)
             );
@@ -363,6 +409,18 @@ public class ProductService {
             PageResponse<ProductResponseDto> pageResponse = new PageResponse<>(
                 productsPage.map(this::convertToResponseDto)
             );
+
+            // Registrar log de auditoría
+            String filterInfo = "";
+            if (stockCatalogueId != null && productStatusId != null) {
+                filterInfo = String.format(" con filtros: Catálogo ID %d y Estado ID %d", stockCatalogueId, productStatusId);
+            } else if (stockCatalogueId != null) {
+                filterInfo = String.format(" con filtro: Catálogo ID %d", stockCatalogueId);
+            } else if (productStatusId != null) {
+                filterInfo = String.format(" con filtro: Estado ID %d", productStatusId);
+            }
+            createAuditLog(String.format("Se consultó la lista de productos%s (Página %d, Tamaño %d)", 
+                filterInfo, page, size));
 
             return ResponseEntity.ok(
                 new ResponseObject("Products retrieved successfully", pageResponse, TypeResponse.SUCCESS)
@@ -489,6 +547,10 @@ public class ProductService {
             byte[] qrImage = qrCodeService.generateQrCodeImage(qrHash);
             
             logger.info("QR code image generated successfully for hash: {}", qrHash);
+            
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se generó la imagen QR para el hash: %s", qrHash));
+            
             return qrImage;
         } catch (WriterException | IOException e) {
             logger.error("Error generating QR code image", e);

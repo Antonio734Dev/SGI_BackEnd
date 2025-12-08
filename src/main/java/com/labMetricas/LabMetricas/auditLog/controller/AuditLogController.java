@@ -25,4 +25,9 @@ public class AuditLogController {
     public List<AuditLogDto> getLogsByUserEmail(@PathVariable("email") String email) {
         return auditLogService.getLogsByUserEmail(email);
     }
+
+    @GetMapping("/user/id/{userId}")
+    public List<AuditLogDto> getLogsByUserId(@PathVariable("userId") java.util.UUID userId) {
+        return auditLogService.getLogsByUserId(userId);
+    }
 } 

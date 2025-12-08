@@ -8,6 +8,8 @@ import com.labMetricas.LabMetricas.user.model.dto.ChangePasswordDto;
 import com.labMetricas.LabMetricas.user.model.dto.UserDto;
 import com.labMetricas.LabMetricas.util.ResponseObject;
 import com.labMetricas.LabMetricas.config.ProductionEmailService;
+import com.labMetricas.LabMetricas.auditLog.model.AuditLog;
+import com.labMetricas.LabMetricas.auditLog.repository.AuditLogRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,8 +44,38 @@ public class UserService {
     @Autowired
     private ProductionEmailService productionEmailService;
 
+    @Autowired
+    private AuditLogRepository auditLogRepository;
+
     @Value("${frontend.url}")
     private String frontendUrl;
+
+    // Método helper para crear logs de auditoría
+    private void createAuditLog(String action, User user) {
+        try {
+            // Obtener el usuario actual autenticado
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            User currentUser = null;
+            
+            if (authentication != null && authentication.isAuthenticated()) {
+                String email = authentication.getName();
+                Optional<User> userOpt = userRepository.findByEmail(email);
+                currentUser = userOpt.orElse(null);
+            }
+            
+            AuditLog auditLog = new AuditLog();
+            auditLog.setAction(action);
+            auditLog.setUser(currentUser);
+            auditLog.setCreatedAt(LocalDateTime.now());
+            auditLogRepository.save(auditLog);
+            
+            logger.debug("Audit log created: {} by user: {}", action, 
+                currentUser != null ? currentUser.getEmail() : "ANONYMOUS");
+        } catch (Exception e) {
+            logger.error("Error creating audit log: {}", action, e);
+            // No lanzar excepción para no interrumpir el flujo principal
+        }
+    }
 
     // Method to generate a secure password
     private String generateSecurePassword() {
@@ -199,6 +231,9 @@ public class UserService {
             // Convert to DTO for response
             UserDto responseDto = convertToDto(updatedUser);
 
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se actualizó el usuario: %s (%s)", updatedUser.getName(), updatedUser.getEmail()), updatedUser);
+
             return ResponseEntity.ok(
                 new ResponseObject("User updated successfully", responseDto, TypeResponse.SUCCESS)
             );
@@ -232,6 +267,9 @@ public class UserService {
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
 
+            // Registrar log de auditoría
+            createAuditLog("Se consultó la lista de usuarios", null);
+
             return ResponseEntity.ok(
                 new ResponseObject("Users retrieved successfully", users, TypeResponse.SUCCESS)
             );
@@ -251,6 +289,9 @@ public class UserService {
                     .filter(u -> u.getEmail() == null || !normalized.equals(u.getEmail().trim().toLowerCase()))
                     .map(this::convertToDto)
                     .collect(Collectors.toList());
+
+            // Registrar log de auditoría
+            createAuditLog("Se consultó la lista de usuarios (excluyendo usuario actual)", null);
 
             return ResponseEntity.ok(
                     new ResponseObject("Users retrieved successfully (excluding current)", users, TypeResponse.SUCCESS)
@@ -273,6 +314,9 @@ public class UserService {
             user.setStatus(false);
             user.setDeletedAt(LocalDateTime.now());
             userRepository.save(user);
+
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se eliminó el usuario: %s (%s)", user.getName(), user.getEmail()), user);
 
             return ResponseEntity.ok(
                 new ResponseObject("User deleted successfully", null, TypeResponse.SUCCESS)
@@ -310,6 +354,9 @@ public class UserService {
             // Send password change confirmation email
             sendPasswordChangeConfirmation(currentUser);
 
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se cambió la contraseña del usuario: %s (%s)", currentUser.getName(), currentUser.getEmail()), currentUser);
+
             return ResponseEntity.ok(
                 new ResponseObject("Password changed successfully", null, TypeResponse.SUCCESS)
             );
@@ -334,6 +381,11 @@ public class UserService {
 
             // Send status change notification
             sendUserStatusChangeNotification(updatedUser, oldStatus);
+
+            // Registrar log de auditoría
+            String statusText = updatedUser.getStatus() ? "Activo" : "Inactivo";
+            createAuditLog(String.format("Se cambió el estado del usuario: %s (%s) a %s", 
+                updatedUser.getName(), updatedUser.getEmail(), statusText), updatedUser);
 
             return ResponseEntity.ok(
                 new ResponseObject("User status updated successfully", convertToDto(updatedUser), TypeResponse.SUCCESS)
@@ -418,6 +470,9 @@ public class UserService {
             User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se consultó el usuario con email: %s", email), user);
+
             return ResponseEntity.ok(
                 new ResponseObject("User retrieved successfully", convertToDto(user), TypeResponse.SUCCESS)
             );
@@ -440,6 +495,9 @@ public class UserService {
             user.setStatus(!user.getStatus());
             user.setDeletedAt(LocalDateTime.now());
             userRepository.saveAndFlush(user);
+
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se eliminó el usuario con email: %s", email), user);
 
             return ResponseEntity.ok(
                 new ResponseObject("User deleted successfully", null, TypeResponse.SUCCESS)

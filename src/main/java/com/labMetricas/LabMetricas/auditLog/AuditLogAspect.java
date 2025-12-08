@@ -18,8 +18,9 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Optional;
 
-@Aspect
-@Component
+// Deshabilitado - Los logs ahora se registran manualmente en cada servicio
+// @Aspect
+// @Component
 public class AuditLogAspect {
 
     @Autowired

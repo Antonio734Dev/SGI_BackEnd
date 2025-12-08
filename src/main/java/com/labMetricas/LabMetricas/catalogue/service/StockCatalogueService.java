@@ -11,6 +11,8 @@ import com.labMetricas.LabMetricas.product.repository.ProductRepository;
 import com.labMetricas.LabMetricas.user.model.User;
 import com.labMetricas.LabMetricas.user.repository.UserRepository;
 import com.labMetricas.LabMetricas.util.ResponseObject;
+import com.labMetricas.LabMetricas.auditLog.model.AuditLog;
+import com.labMetricas.LabMetricas.auditLog.repository.AuditLogRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class StockCatalogueService {
@@ -39,6 +42,36 @@ public class StockCatalogueService {
 
     @Autowired
     private ProductStockMovementRepository productStockMovementRepository;
+
+    @Autowired
+    private AuditLogRepository auditLogRepository;
+
+    // Método helper para crear logs de auditoría
+    private void createAuditLog(String action) {
+        try {
+            // Obtener el usuario actual autenticado
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            User currentUser = null;
+            
+            if (authentication != null && authentication.isAuthenticated()) {
+                String email = authentication.getName();
+                Optional<User> userOpt = userRepository.findByEmail(email);
+                currentUser = userOpt.orElse(null);
+            }
+            
+            AuditLog auditLog = new AuditLog();
+            auditLog.setAction(action);
+            auditLog.setUser(currentUser);
+            auditLog.setCreatedAt(LocalDateTime.now());
+            auditLogRepository.save(auditLog);
+            
+            logger.debug("Audit log created: {} by user: {}", action, 
+                currentUser != null ? currentUser.getEmail() : "ANONYMOUS");
+        } catch (Exception e) {
+            logger.error("Error creating audit log: {}", action, e);
+            // No lanzar excepción para no interrumpir el flujo principal
+        }
+    }
 
     @Transactional
     public ResponseEntity<ResponseObject> createStockCatalogue(StockCatalogueDto stockCatalogueDto) {
@@ -81,6 +114,11 @@ public class StockCatalogueService {
             StockCatalogueDto responseDto = convertToDto(savedStockCatalogue);
 
             logger.info("Stock catalogue created successfully: {}", savedStockCatalogue.getName());
+
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se agregó un catálogo de stock: %s (SKU: %s)", 
+                savedStockCatalogue.getName(), 
+                savedStockCatalogue.getSku() != null ? savedStockCatalogue.getSku() : "N/A"));
 
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ResponseObject("Stock catalogue created successfully", responseDto, TypeResponse.SUCCESS)
@@ -143,6 +181,10 @@ public class StockCatalogueService {
 
             logger.info("Stock catalogue updated successfully: {}", updatedStockCatalogue.getName());
 
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se actualizó el catálogo de stock: %s (ID: %d)", 
+                updatedStockCatalogue.getName(), updatedStockCatalogue.getId()));
+
             return ResponseEntity.ok(
                 new ResponseObject("Stock catalogue updated successfully", responseDto, TypeResponse.SUCCESS)
             );
@@ -158,6 +200,10 @@ public class StockCatalogueService {
         try {
             StockCatalogue stockCatalogue = stockCatalogueRepository.findByIdAndStatusTrue(id)
                 .orElseThrow(() -> new RuntimeException("Stock catalogue not found or inactive"));
+
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se consultó el catálogo de stock con ID: %d (%s)", 
+                id, stockCatalogue.getName()));
 
             return ResponseEntity.ok(
                 new ResponseObject("Stock catalogue retrieved successfully", convertToDto(stockCatalogue), TypeResponse.SUCCESS)
@@ -193,6 +239,12 @@ public class StockCatalogueService {
                 .map(this::convertToDto)
                 .collect(java.util.stream.Collectors.toList());
 
+            // Registrar log de auditoría
+            String searchInfo = search != null && !search.trim().isEmpty() 
+                ? String.format(" con búsqueda: '%s'", search) 
+                : "";
+            createAuditLog(String.format("Se consultó la lista de catálogos de stock%s", searchInfo));
+
             return ResponseEntity.ok(
                 new ResponseObject("Stock catalogues retrieved successfully", dtos, TypeResponse.SUCCESS)
             );
@@ -216,6 +268,10 @@ public class StockCatalogueService {
             stockCatalogueRepository.save(stockCatalogue);
 
             logger.info("Stock catalogue status changed to inactive: {}", stockCatalogue.getName());
+
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se eliminó el catálogo de stock: %s (ID: %d)", 
+                stockCatalogue.getName(), stockCatalogue.getId()));
 
             return ResponseEntity.ok(
                 new ResponseObject("Stock catalogue status changed to inactive successfully", convertToDto(stockCatalogue), TypeResponse.SUCCESS)
@@ -242,6 +298,11 @@ public class StockCatalogueService {
             String statusMessage = updatedStockCatalogue.getStatus() ? "activated" : "deactivated";
             logger.info("Stock catalogue {} status changed from {} to {}", 
                 updatedStockCatalogue.getName(), oldStatus, updatedStockCatalogue.getStatus());
+
+            // Registrar log de auditoría
+            String statusText = updatedStockCatalogue.getStatus() ? "Activo" : "Inactivo";
+            createAuditLog(String.format("Se cambió el estado del catálogo de stock: %s (ID: %d) a %s", 
+                updatedStockCatalogue.getName(), updatedStockCatalogue.getId(), statusText));
 
             return ResponseEntity.ok(
                 new ResponseObject("Stock catalogue " + statusMessage + " successfully", 
