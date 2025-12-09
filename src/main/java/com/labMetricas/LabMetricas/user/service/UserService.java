@@ -77,32 +77,6 @@ public class UserService {
         }
     }
 
-    // Method to generate a secure password
-    private String generateSecurePassword() {
-        // Generate a password with at least 8 characters, including:
-        // - An uppercase letter
-        // - A special character
-        // - Remaining characters can be mixed
-        String uppercaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        String specialCharacters = "!@#$%^&*()_+-=[]{}|;:,.<>?";
-        String allCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" + specialCharacters;
-
-        StringBuilder password = new StringBuilder();
-
-        // Add one uppercase letter
-        password.append(uppercaseLetters.charAt((int) (Math.random() * uppercaseLetters.length())));
-
-        // Add one special character
-        password.append(specialCharacters.charAt((int) (Math.random() * specialCharacters.length())));
-
-        // Fill the rest of the password to make it at least 8 characters long
-        while (password.length() < 8) {
-            password.append(allCharacters.charAt((int) (Math.random() * allCharacters.length())));
-        }
-
-        return password.toString();
-    }
-
     // Method to send welcome email with temporary password
     private void sendWelcomeEmail(String email, String temporaryPassword, String name) {
         try {
@@ -170,7 +144,7 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Role not found")));
             String rawPassword = userDto.getPassword() != null && !userDto.getPassword().isEmpty() 
                 ? userDto.getPassword() 
-                : generateSecurePassword();
+                : "Admin2024#Secure";
             user.setPassword(passwordEncoder.encode(rawPassword));
             user.setCreatedAt(LocalDateTime.now());
             user.setUpdatedAt(LocalDateTime.now());

@@ -117,18 +117,9 @@ public class DataInitializer implements CommandLineRunner {
         createUserIfNotExists(
             "Supervisor UTEZ", 
             "20233tn106@utez.edu.mx", 
-            "Super2024#Lab", 
+            "Admin2024#Secure", 
             "SUPERVISOR",
             "Supervisor de Laboratorio"
-        );
-
-        // Operador
-        createUserIfNotExists(
-            "Desarrollador LabMétricas", 
-            "labmetricasdev@gmail.com", 
-            "Oper2024#Lab", 
-            "OPERADOR",
-            "Operador de Laboratorio"
         );
     }
 
@@ -223,20 +214,20 @@ public class DataInitializer implements CommandLineRunner {
             }
 
             // Create sample stock catalogues
-            createStockCatalogueIfNotExists("Azúcar Morena 1kg", "SKU-AZU-001", 
-                "Azúcar morena en presentación de 1 kilogramo", "kg", 
+            createStockCatalogueIfNotExists("Azúcar Morena", "SKU-AZU-001", 
+                "Azúcar morena", "kg", 
                 50, adminUser);
 
-            createStockCatalogueIfNotExists("Harina de Trigo 2kg", "SKU-HAR-002", 
-                "Harina de trigo en presentación de 2 kilogramos", "kg", 
+            createStockCatalogueIfNotExists("Harina de Trigo", "SKU-HAR-002", 
+                "Harina de trigo", "kg", 
                 25, adminUser);
 
-            createStockCatalogueIfNotExists("Aceite Vegetal 1L", "SKU-ACE-003", 
-                "Aceite vegetal en presentación de 1 litro", "litros", 
+            createStockCatalogueIfNotExists("Aceite Vegetal", "SKU-ACE-003", 
+                "Aceite vegetal", "litros", 
                 12, adminUser);
 
-            createStockCatalogueIfNotExists("Sal de Mesa 500g", "SKU-SAL-004", 
-                "Sal de mesa en presentación de 500 gramos", "kg", 
+            createStockCatalogueIfNotExists("Sal de Mesa", "SKU-SAL-004", 
+                "Sal de mesa", "kg", 
                 5, adminUser);
 
             logger.info("Stock catalogues initialized successfully");
