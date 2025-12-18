@@ -292,35 +292,6 @@ public class StockCatalogueService {
     }
 
     /**
-     * Calcula los descuentos (suma de descuentos de productos con estado "terminado") para un stock
-     */
-    private Integer calculateDescuentos(StockCatalogue stockCatalogue) {
-        try {
-            // Buscar productos con estado "terminado" para este stock
-            var productosTerminados = productRepository.findByStockCatalogueIdAndProductStatusNameIgnoreCaseAndDeletedAtIsNull(
-                stockCatalogue.getId(), "terminado"
-            );
-
-            if (productosTerminados.isEmpty()) {
-                return 0;
-            }
-
-            // Sumar los descuentos de los productos terminados
-            int totalDescuentos = 0;
-            for (Product product : productosTerminados) {
-                if (product.getDescuentos() != null) {
-                    totalDescuentos += product.getDescuentos();
-                }
-            }
-
-            return totalDescuentos;
-        } catch (Exception e) {
-            logger.warn("Error calculating descuentos for stock catalogue {}: {}", stockCatalogue.getId(), e.getMessage());
-            return 0;
-        }
-    }
-
-    /**
      * Calcula el total de productos referenciados a este stock
      */
     private Integer calculateTotalProductos(StockCatalogue stockCatalogue) {
@@ -329,26 +300,6 @@ public class StockCatalogueService {
             return productos.size();
         } catch (Exception e) {
             logger.warn("Error calculating total productos for stock catalogue {}: {}", stockCatalogue.getId(), e.getMessage());
-            return 0;
-        }
-    }
-
-    /**
-     * Calcula la cantidad sobrante total (suma de cantidadTotal de productos - descuentos)
-     */
-    private Integer calculateCantidadSobrante(StockCatalogue stockCatalogue) {
-        try {
-            var productos = productRepository.findByStockCatalogueIdAndDeletedAtIsNull(stockCatalogue.getId());
-            int totalCantidad = 0;
-            for (Product product : productos) {
-                if (product.getCantidadTotal() != null) {
-                    totalCantidad += product.getCantidadTotal();
-                }
-            }
-            int descuentos = calculateDescuentos(stockCatalogue);
-            return Math.max(0, totalCantidad - descuentos);
-        } catch (Exception e) {
-            logger.warn("Error calculating cantidad sobrante for stock catalogue {}: {}", stockCatalogue.getId(), e.getMessage());
             return 0;
         }
     }
@@ -363,10 +314,8 @@ public class StockCatalogueService {
         
         // Calcular conteos desde los productos asociados
         Integer totalProductos = calculateTotalProductos(stockCatalogue);
-        Integer cantidadSobrante = calculateCantidadSobrante(stockCatalogue);
         
         dto.setTotalProductos(totalProductos);
-        dto.setCantidadSobrante(cantidadSobrante);
         dto.setStatus(stockCatalogue.getStatus());
         
         dto.setCreatedAt(stockCatalogue.getCreatedAt());

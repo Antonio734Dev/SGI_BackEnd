@@ -31,7 +31,6 @@ public class StockCatalogueDto {
 
     // Campos calculados desde los productos asociados
     private Integer totalProductos; // Conteo total de productos referenciados a este stock
-    private Integer cantidadSobrante; // Suma de cantidadTotal de productos - descuentos
 
     private Boolean status; // Estado activo/inactivo
 
