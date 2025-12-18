@@ -13,8 +13,13 @@ import com.labMetricas.LabMetricas.role.model.Role;
 import com.labMetricas.LabMetricas.role.repository.RoleRepository;
 import com.labMetricas.LabMetricas.status.model.ProductStatus;
 import com.labMetricas.LabMetricas.status.repository.ProductStatusRepository;
+import com.labMetricas.LabMetricas.unitofmeasurement.model.UnitOfMeasurement;
+import com.labMetricas.LabMetricas.unitofmeasurement.repository.UnitOfMeasurementRepository;
 import com.labMetricas.LabMetricas.user.model.User;
 import com.labMetricas.LabMetricas.user.repository.UserRepository;
+import com.labMetricas.LabMetricas.warehousetype.model.WarehouseType;
+import com.labMetricas.LabMetricas.warehousetype.repository.WarehouseTypeRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -57,6 +62,12 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private ProductStockMovementRepository productStockMovementRepository;
 
+    @Autowired
+    private WarehouseTypeRepository warehouseTypeRepository;
+
+    @Autowired
+    private UnitOfMeasurementRepository unitOfMeasurementRepository;
+
     @Override
     public void run(String... args) {
         try {
@@ -67,6 +78,12 @@ public class DataInitializer implements CommandLineRunner {
 
             // Create default users
             createDefaultUsers();
+
+            // Initialize warehouse types
+            initializeWarehouseTypes();
+
+            // Initialize units of measurement
+            initializeUnitsOfMeasurement();
 
             // Initialize product statuses
             initializeProductStatuses();
@@ -157,6 +174,71 @@ public class DataInitializer implements CommandLineRunner {
             role.setUpdatedAt(LocalDateTime.now());
             roleRepository.save(role);
             logger.info("Created role: {}", name);
+        }
+    }
+
+    private void initializeWarehouseTypes() {
+        // Check if table is empty
+        if (warehouseTypeRepository.count() == 0) {
+            // Crear los tipos de almacén: MPS, MES, MEM, MPM
+            createWarehouseTypeIfNotExists("MPS", "Materia Prima de Suplementos", 
+                "Almacén de materia prima de suplementos");
+            createWarehouseTypeIfNotExists("MES", "Materia Prima de Suplementos - Especial", 
+                "Almacén especial de materia prima de suplementos");
+            createWarehouseTypeIfNotExists("MEM", "Materia Prima de Suplementos - Muestra", 
+                "Almacén de muestras de materia prima de suplementos");
+            createWarehouseTypeIfNotExists("MPM", "Materia Prima de Suplementos - Mantenimiento", 
+                "Almacén de mantenimiento de materia prima de suplementos");
+
+            logger.info("Warehouse types initialized successfully");
+        } else {
+            logger.info("Warehouse types already exist. Skipping initialization.");
+        }
+    }
+
+    private void createWarehouseTypeIfNotExists(String code, String name, String description) {
+        if (!warehouseTypeRepository.existsByCode(code)) {
+            WarehouseType warehouseType = new WarehouseType();
+            warehouseType.setCode(code);
+            warehouseType.setName(name);
+            warehouseType.setDescription(description);
+            warehouseType.setCreatedAt(LocalDateTime.now());
+            warehouseType.setUpdatedAt(LocalDateTime.now());
+            warehouseTypeRepository.save(warehouseType);
+            logger.info("Created warehouse type: {} - {}", code, name);
+        }
+    }
+
+    private void initializeUnitsOfMeasurement() {
+        // Check if table is empty
+        if (unitOfMeasurementRepository.count() == 0) {
+            // Crear unidades principales
+            UnitOfMeasurement kg = createUnitIfNotExists("Kilogramo", "KG", "Unidad de peso en kilogramos", null);
+            // Crear sub-unidades relacionadas con KG
+            createUnitIfNotExists("Gramo", "G", "Unidad de peso en gramos", kg);
+            createUnitIfNotExists("Mililitro", "ML", "Unidad de volumen en mililitros", kg);
+            createUnitIfNotExists("Litro", "L", "Unidad de volumen en litros", kg);
+
+            logger.info("Units of measurement initialized successfully");
+        } else {
+            logger.info("Units of measurement already exist. Skipping initialization.");
+        }
+    }
+
+    private UnitOfMeasurement createUnitIfNotExists(String name, String code, String description, UnitOfMeasurement parentUnit) {
+        if (!unitOfMeasurementRepository.existsByCode(code)) {
+            UnitOfMeasurement unit = new UnitOfMeasurement();
+            unit.setName(name);
+            unit.setCode(code);
+            unit.setDescription(description);
+            unit.setParentUnit(parentUnit);
+            unit.setCreatedAt(LocalDateTime.now());
+            unit.setUpdatedAt(LocalDateTime.now());
+            unitOfMeasurementRepository.save(unit);
+            logger.info("Created unit of measurement: {} ({})", name, code);
+            return unit;
+        } else {
+            return unitOfMeasurementRepository.findByCode(code).orElse(null);
         }
     }
 
@@ -271,39 +353,84 @@ public class DataInitializer implements CommandLineRunner {
             StockCatalogue azucar = stockCatalogueRepository.findBySku("SKU-AZU-001").orElse(null);
             StockCatalogue harina = stockCatalogueRepository.findBySku("SKU-HAR-002").orElse(null);
             StockCatalogue aceite = stockCatalogueRepository.findBySku("SKU-ACE-003").orElse(null);
+            StockCatalogue sal = stockCatalogueRepository.findBySku("SKU-SAL-004").orElse(null);
 
             ProductStatus sellado = productStatusRepository.findByName("Sellado").orElse(null);
             ProductStatus abierto = productStatusRepository.findByName("Abierto").orElse(null);
             ProductStatus cuarentena = productStatusRepository.findByName("Cuarentena").orElse(null);
+            ProductStatus terminado = productStatusRepository.findByName("Terminado").orElse(null);
+
+            // Get warehouse types
+            WarehouseType mps = warehouseTypeRepository.findByCode("MPS").orElse(null);
+            WarehouseType mes = warehouseTypeRepository.findByCode("MES").orElse(null);
+
+            // Get units of measurement
+            UnitOfMeasurement kgUnit = unitOfMeasurementRepository.findByCode("KG").orElse(null);
+            UnitOfMeasurement lUnit = unitOfMeasurementRepository.findByCode("L").orElse(null);
 
             if (azucar == null || sellado == null) {
                 logger.warn("Required stock catalogue or status not found. Skipping product initialization.");
                 return;
             }
 
-            // Create sample products
+            // Create sample products - Variedad de productos de prueba
+            // Producto 1: Azúcar Sellado
             createProductWithQrAndMovement("LOTE-AZU-2024-001", azucar, sellado, 
                 LocalDate.now().minusDays(5), LocalDate.now().plusYears(1), 
-                50, 1, adminUser,
-                "PROV-AZU-2024-001", "Azucarera del Sur S.A. de C.V.", "Distribuidora Central México");
+                50, 10, adminUser,
+                "PROV-AZU-2024-001", "Azucarera del Sur S.A. de C.V.", "Distribuidora Central México",
+                mps, kgUnit, "AN-001", "COD-AZU-001", LocalDate.now().plusMonths(6), "SKU-AZU-001-LOTE-AZU-2024-001");
 
+            // Producto 2: Azúcar Sellado (diferente lote)
             createProductWithQrAndMovement("LOTE-AZU-2024-002", azucar, sellado, 
                 LocalDate.now().minusDays(3), LocalDate.now().plusYears(1), 
-                50, 1, adminUser,
-                "PROV-AZU-2024-002", "Azucarera del Sur S.A. de C.V.", "Distribuidora Central México");
+                50, 15, adminUser,
+                "PROV-AZU-2024-002", "Azucarera del Sur S.A. de C.V.", "Distribuidora Central México",
+                mps, kgUnit, "AN-002", "COD-AZU-002", LocalDate.now().plusMonths(6), "SKU-AZU-001-LOTE-AZU-2024-002");
 
+            // Producto 3: Harina Abierto
             if (harina != null && abierto != null) {
                 createProductWithQrAndMovement("LOTE-HAR-2024-001", harina, abierto, 
                     LocalDate.now().minusDays(10), LocalDate.now().plusMonths(6), 
-                    25, 2, adminUser,
-                    "PROV-HAR-2024-001", "Molinos del Norte S.A.", "Distribuidora Alimentos Premium");
+                    25, 5, adminUser,
+                    "PROV-HAR-2024-001", "Molinos del Norte S.A.", "Distribuidora Alimentos Premium",
+                    mps, kgUnit, "AN-003", "COD-HAR-001", LocalDate.now().plusMonths(3), "SKU-HAR-002-LOTE-HAR-2024-001");
             }
 
+            // Producto 4: Aceite en Cuarentena
             if (aceite != null && cuarentena != null) {
                 createProductWithQrAndMovement("LOTE-ACE-2024-001", aceite, cuarentena, 
                     LocalDate.now().minusDays(2), LocalDate.now().plusMonths(12), 
-                    12, 12, adminUser,
-                    "PROV-ACE-2024-001", "Aceites Vegetales Nacionales S.A.", "Distribuidora Oleaginosas S.A.");
+                    12, 20, adminUser,
+                    "PROV-ACE-2024-001", "Aceites Vegetales Nacionales S.A.", "Distribuidora Oleaginosas S.A.",
+                    mes, lUnit, "AN-004", "COD-ACE-001", LocalDate.now().plusMonths(9), "SKU-ACE-003-LOTE-ACE-2024-001");
+            }
+
+            // Producto 5: Sal Sellado
+            if (sal != null && sellado != null) {
+                createProductWithQrAndMovement("LOTE-SAL-2024-001", sal, sellado, 
+                    LocalDate.now().minusDays(7), LocalDate.now().plusYears(2), 
+                    5, 8, adminUser,
+                    "PROV-SAL-2024-001", "Salinera Nacional S.A.", "Distribuidora Sal y Especias",
+                    mps, kgUnit, "AN-005", "COD-SAL-001", LocalDate.now().plusMonths(12), "SKU-SAL-004-LOTE-SAL-2024-001");
+            }
+
+            // Producto 6: Azúcar Terminado (para pruebas de descuentos)
+            if (azucar != null && terminado != null) {
+                createProductWithQrAndMovement("LOTE-AZU-2024-003", azucar, terminado, 
+                    LocalDate.now().minusDays(30), LocalDate.now().minusDays(5), 
+                    50, 3, adminUser,
+                    "PROV-AZU-2024-003", "Azucarera del Sur S.A. de C.V.", "Distribuidora Central México",
+                    mps, kgUnit, "AN-006", "COD-AZU-003", null, "SKU-AZU-001-LOTE-AZU-2024-003");
+            }
+
+            // Producto 7: Harina Sellado
+            if (harina != null && sellado != null) {
+                createProductWithQrAndMovement("LOTE-HAR-2024-002", harina, sellado, 
+                    LocalDate.now().minusDays(1), LocalDate.now().plusMonths(8), 
+                    25, 12, adminUser,
+                    "PROV-HAR-2024-002", "Molinos del Norte S.A.", "Distribuidora Alimentos Premium",
+                    mps, kgUnit, "AN-007", "COD-HAR-002", LocalDate.now().plusMonths(4), "SKU-HAR-002-LOTE-HAR-2024-002");
             }
 
             logger.info("Products initialized successfully");
@@ -315,21 +442,41 @@ public class DataInitializer implements CommandLineRunner {
     private void createProductWithQrAndMovement(String lote, StockCatalogue stockCatalogue, 
             ProductStatus productStatus, LocalDate fechaIngreso, LocalDate fechaCaducidad, 
             Integer cantidad, Integer totalEnvases, User createdByUser,
-            String loteProveedor, String fabricante, String distribuidor) {
+            String loteProveedor, String fabricante, String distribuidor,
+            WarehouseType warehouseType, UnitOfMeasurement unitOfMeasurement,
+            String numeroAnalisis, String codigoProducto, LocalDate reanalisis, String codigo) {
         try {
             // Create Product
             Product product = new Product();
             product.setStockCatalogue(stockCatalogue);
             product.setProductStatus(productStatus);
             product.setCreatedByUser(createdByUser);
+            product.setWarehouseType(warehouseType);
+            product.setUnitOfMeasurement(unitOfMeasurement);
             product.setLote(lote);
             product.setLoteProveedor(loteProveedor);
             product.setFabricante(fabricante);
             product.setDistribuidor(distribuidor);
             product.setFecha(fechaIngreso);
             product.setCaducidad(fechaCaducidad);
+            product.setReanalisis(reanalisis);
             product.setNombre(stockCatalogue.getName());
-            product.setCodigo(generateProductCode(stockCatalogue, lote));
+            // Usar código proporcionado o generar automáticamente
+            product.setCodigo(codigo != null && !codigo.isEmpty() ? codigo : generateProductCode(stockCatalogue, lote));
+            product.setCodigoProducto(codigoProducto);
+            product.setNumeroAnalisis(numeroAnalisis);
+            // CRÍTICO: numeroContenedores es obligatorio (@NotNull)
+            product.setNumeroContenedores(totalEnvases);
+            // Cantidad total de piezas (basado en cantidad o totalEnvases según lógica de negocio)
+            product.setCantidadTotal(cantidad != null ? cantidad : totalEnvases);
+            // Descuentos inicializados en 0
+            product.setDescuentos(0);
+            
+            // Calcular automáticamente cantidadSobrante y totalSobrante: cantidadTotal - descuentos
+            BigDecimal cantidadSobranteCalculada = BigDecimal.valueOf(product.getCantidadTotal() - product.getDescuentos());
+            product.setCantidadSobrante(cantidadSobranteCalculada);
+            product.setTotalSobrante(cantidadSobranteCalculada);
+            
             product.setCreatedAt(LocalDateTime.now());
             product.setUpdatedAt(LocalDateTime.now());
 

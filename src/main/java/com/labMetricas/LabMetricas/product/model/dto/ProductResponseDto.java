@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -23,9 +24,24 @@ public class ProductResponseDto {
     private String fabricante;
     private String distribuidor;
     private String codigo;
+    private String codigoProducto;
+    private String numeroAnalisis;
     private LocalDate fecha;
     private LocalDate caducidad;
     private LocalDate reanalisis;
+    private BigDecimal cantidadSobrante;
+    private BigDecimal totalSobrante;
+    private Integer numeroContenedores;
+    
+    /**
+     * Cantidad total de piezas del producto (número de piezas).
+     */
+    private Integer cantidadTotal;
+    
+    /**
+     * Descuentos aplicados al producto (ajuste de piezas).
+     */
+    private Integer descuentos;
     
     // Información del estado (nombres legibles)
     private Integer productStatusId;
@@ -40,6 +56,16 @@ public class ProductResponseDto {
     private UUID createdByUserId;
     private String createdByUserName;
     
+    // Información del warehouse type
+    private Integer warehouseTypeId;
+    private String warehouseTypeCode;
+    private String warehouseTypeName;
+    
+    // Información de unidad de medida
+    private Integer unitOfMeasurementId;
+    private String unitOfMeasurementName;
+    private String unitOfMeasurementCode;
+    
     // Timestamps
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -50,10 +76,10 @@ public class ProductResponseDto {
     private String stockCatalogueSku;
     private String stockCatalogueUnidad;
     
-    // Métricas de stock
-    private Integer cantidadTotal; // stock_cantidad (máximo acumulado)
-    private Integer descuentos; // Productos con estado "terminado"
-    private Integer cantidadSobrante; // cantidadTotal - descuentos
+    // Métricas de stock (calculadas desde StockCatalogue)
+    private Integer stockCantidadTotal; // stock_cantidad del catálogo (máximo acumulado)
+    private Integer stockDescuentos; // Descuentos calculados del catálogo (productos terminados)
+    private Integer cantidadSobranteCalculada; // stockCantidadTotal - stockDescuentos
     private Integer envasesRechazados;
     private Integer envasesAprobados;
 }

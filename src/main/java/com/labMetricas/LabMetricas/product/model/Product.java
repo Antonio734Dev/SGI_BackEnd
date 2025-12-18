@@ -3,7 +3,10 @@ package com.labMetricas.LabMetricas.product.model;
 import com.labMetricas.LabMetricas.catalogue.model.StockCatalogue;
 import com.labMetricas.LabMetricas.qrcode.model.QrCode;
 import com.labMetricas.LabMetricas.status.model.ProductStatus;
+import com.labMetricas.LabMetricas.unitofmeasurement.model.UnitOfMeasurement;
 import com.labMetricas.LabMetricas.user.model.User;
+import com.labMetricas.LabMetricas.warehousetype.model.WarehouseType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,6 +21,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -49,8 +53,13 @@ public class Product {
     @JoinColumn(name = "created_by_user_id", columnDefinition = "UUID")
     private User createdByUser;
 
-    @Column(name = "material", columnDefinition = "VARCHAR(200)", length = 200)
-    private String material;
+    @ManyToOne
+    @JoinColumn(name = "warehouse_type_id")
+    private WarehouseType warehouseType;
+
+    @ManyToOne
+    @JoinColumn(name = "unit_of_measurement_id")
+    private UnitOfMeasurement unitOfMeasurement;
 
     @Column(name = "nombre", columnDefinition = "VARCHAR(200)", nullable = false, length = 200)
     private String nombre;
@@ -61,10 +70,13 @@ public class Product {
     @Column(name = "codigo", columnDefinition = "VARCHAR(50)", nullable = false, length = 50)
     private String codigo;
 
+    @Column(name = "codigo_producto", columnDefinition = "VARCHAR(50)", length = 50)
+    private String codigoProducto;
+
     @Column(name = "lote", columnDefinition = "VARCHAR(100)", nullable = false, length = 100)
     private String lote;
 
-    @Column(name = "lote_proveedor", columnDefinition = "VARCHAR(100)", length = 100)
+    @Column(name = "lote_proveedor", columnDefinition = "VARCHAR(100)", nullable = false, length = 100)
     private String loteProveedor;
 
     @Column(name = "fabricante", columnDefinition = "VARCHAR(200)", length = 200)
@@ -73,11 +85,41 @@ public class Product {
     @Column(name = "distribuidor", columnDefinition = "VARCHAR(200)", length = 200)
     private String distribuidor;
 
+    @Column(name = "numero_analisis", columnDefinition = "VARCHAR(50)", length = 50)
+    private String numeroAnalisis;
+
     @Column(name = "caducidad", columnDefinition = "DATE", nullable = false)
     private LocalDate caducidad;
 
     @Column(name = "reanalisis", columnDefinition = "DATE")
     private LocalDate reanalisis;
+
+    /**
+     * Cantidad sobrante calculada: cantidadTotal - descuentos (resultado guardado).
+     */
+    @Column(name = "cantidad_sobrante", columnDefinition = "DECIMAL(15,4)", precision = 15, scale = 4)
+    private BigDecimal cantidadSobrante;
+
+    /**
+     * Total sobrante calculado: acumulado de lo que queda (cantidadTotal - descuentos) con mayor precisión.
+     */
+    @Column(name = "total_sobrante", columnDefinition = "DECIMAL(15,4)", precision = 15, scale = 4)
+    private BigDecimal totalSobrante;
+
+    @Column(name = "numero_contenedores", columnDefinition = "INT", nullable = false)
+    private Integer numeroContenedores;
+
+    /**
+     * Cantidad total de piezas del producto (número de piezas).
+     */
+    @Column(name = "cantidad_total", columnDefinition = "INT")
+    private Integer cantidadTotal;
+
+    /**
+     * Descuentos aplicados al producto (ajuste de piezas).
+     */
+    @Column(name = "descuentos", columnDefinition = "INT")
+    private Integer descuentos;
 
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;

@@ -15,6 +15,8 @@ import com.labMetricas.LabMetricas.qrcode.model.QrCode;
 import com.labMetricas.LabMetricas.qrcode.repository.QrCodeRepository;
 import com.labMetricas.LabMetricas.status.model.ProductStatus;
 import com.labMetricas.LabMetricas.status.repository.ProductStatusRepository;
+import com.labMetricas.LabMetricas.unitofmeasurement.model.UnitOfMeasurement;
+import com.labMetricas.LabMetricas.unitofmeasurement.repository.UnitOfMeasurementRepository;
 import com.labMetricas.LabMetricas.user.model.User;
 import com.labMetricas.LabMetricas.user.repository.UserRepository;
 import com.labMetricas.LabMetricas.qrcode.service.QrCodeService;
@@ -22,6 +24,9 @@ import com.labMetricas.LabMetricas.auditLog.model.AuditLog;
 import com.labMetricas.LabMetricas.auditLog.repository.AuditLogRepository;
 import com.labMetricas.LabMetricas.util.PageResponse;
 import com.labMetricas.LabMetricas.util.ResponseObject;
+import com.labMetricas.LabMetricas.warehousetype.model.WarehouseType;
+import com.labMetricas.LabMetricas.warehousetype.repository.WarehouseTypeRepository;
+
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,27 +81,24 @@ public class ProductService {
     @Autowired
     private AuditLogRepository auditLogRepository;
 
-    // Método helper para crear logs de auditoría
-    private void createAuditLog(String action) {
+    @Autowired
+    private WarehouseTypeRepository warehouseTypeRepository;
+
+    @Autowired
+    private UnitOfMeasurementRepository unitOfMeasurementRepository;
+
+    // Método helper para crear logs de auditoría mejorados
+    private void createAuditLog(String action, User user, Product product) {
         try {
-            // Obtener el usuario actual autenticado
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            User currentUser = null;
-            
-            if (authentication != null && authentication.isAuthenticated()) {
-                String email = authentication.getName();
-                Optional<User> userOpt = userRepository.findByEmail(email);
-                currentUser = userOpt.orElse(null);
-            }
-            
             AuditLog auditLog = new AuditLog();
             auditLog.setAction(action);
-            auditLog.setUser(currentUser);
+            auditLog.setUser(user);
             auditLog.setCreatedAt(LocalDateTime.now());
             auditLogRepository.save(auditLog);
             
-            logger.debug("Audit log created: {} by user: {}", action, 
-                currentUser != null ? currentUser.getEmail() : "ANONYMOUS");
+            logger.info("Audit log created: {} by user: {} for product: {}", action, 
+                user != null ? user.getEmail() : "ANONYMOUS",
+                product != null ? product.getId() : "N/A");
         } catch (Exception e) {
             logger.error("Error creating audit log: {}", action, e);
             // No lanzar excepción para no interrumpir el flujo principal
@@ -117,6 +119,20 @@ public class ProductService {
             ProductStatus productStatus = productStatusRepository.findByIdAndDeletedAtIsNull(createProductDto.getProductStatusId())
                 .orElseThrow(() -> new RuntimeException("Product status not found or deleted"));
 
+            // Validar warehouse type si se proporciona
+            WarehouseType warehouseType = null;
+            if (createProductDto.getWarehouseTypeId() != null) {
+                warehouseType = warehouseTypeRepository.findByIdAndDeletedAtIsNull(createProductDto.getWarehouseTypeId())
+                    .orElseThrow(() -> new RuntimeException("Warehouse type not found or deleted"));
+            }
+
+            // Validar unit of measurement si se proporciona
+            UnitOfMeasurement unitOfMeasurement = null;
+            if (createProductDto.getUnitOfMeasurementId() != null) {
+                unitOfMeasurement = unitOfMeasurementRepository.findByIdAndDeletedAtIsNull(createProductDto.getUnitOfMeasurementId())
+                    .orElseThrow(() -> new RuntimeException("Unit of measurement not found or deleted"));
+            }
+
             // Obtener usuario autenticado
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             User currentUser = userRepository.findByEmail(auth.getName())
@@ -128,12 +144,27 @@ public class ProductService {
             product.setStockCatalogue(stockCatalogue);
             product.setProductStatus(productStatus);
             product.setCreatedByUser(currentUser);
+            product.setWarehouseType(warehouseType);
+            product.setUnitOfMeasurement(unitOfMeasurement);
             product.setLote(createProductDto.getLote());
             product.setLoteProveedor(createProductDto.getLoteProveedor());
             product.setFabricante(createProductDto.getFabricante());
             product.setDistribuidor(createProductDto.getDistribuidor());
+            product.setCodigoProducto(createProductDto.getCodigoProducto());
+            product.setNumeroAnalisis(createProductDto.getNumeroAnalisis());
             product.setFecha(createProductDto.getFechaIngreso());
             product.setCaducidad(createProductDto.getFechaCaducidad());
+            product.setReanalisis(createProductDto.getReanalisis());
+            product.setNumeroContenedores(createProductDto.getNumeroContenedores());
+            product.setCantidadTotal(createProductDto.getCantidadTotal());
+            product.setDescuentos(createProductDto.getDescuentos() != null ? createProductDto.getDescuentos() : 0);
+            
+            // Calcular automáticamente cantidadSobrante y totalSobrante: cantidadTotal - descuentos
+            Integer descuentosValue = product.getDescuentos() != null ? product.getDescuentos() : 0;
+            BigDecimal cantidadSobranteCalculada = BigDecimal.valueOf(product.getCantidadTotal() - descuentosValue);
+            product.setCantidadSobrante(cantidadSobranteCalculada);
+            product.setTotalSobrante(cantidadSobranteCalculada);
+            
             product.setCreatedAt(LocalDateTime.now());
             product.setUpdatedAt(LocalDateTime.now());
 
@@ -167,7 +198,7 @@ public class ProductService {
             movement.setUser(currentUser);
             movement.setStockCatalogue(stockCatalogue);
             movement.setTipo(TipoMovimiento.entrada);
-            movement.setCantidad(BigDecimal.valueOf(createProductDto.getTotalEnvases()));
+            movement.setCantidad(BigDecimal.valueOf(createProductDto.getNumeroContenedores()));
             movement.setReferencia("Ingreso Inicial - Lote " + createProductDto.getLote());
             movement.setCreatedAt(LocalDateTime.now());
             movement.setUpdatedAt(LocalDateTime.now());
@@ -179,7 +210,7 @@ public class ProductService {
             logger.info("Updating stock catalogue stock_actual...");
             BigDecimal currentStock = stockCatalogue.getStockActual() != null ? 
                 stockCatalogue.getStockActual() : BigDecimal.ZERO;
-            BigDecimal newStock = currentStock.add(BigDecimal.valueOf(createProductDto.getTotalEnvases()));
+            BigDecimal newStock = currentStock.add(BigDecimal.valueOf(createProductDto.getNumeroContenedores()));
             stockCatalogue.setStockActual(newStock);
 
             if (stockCatalogue.getCantidad() == null || stockCatalogue.getCantidad() == 0) {
@@ -187,11 +218,11 @@ public class ProductService {
             }
             Integer currentStockCantidad = stockCatalogue.getStockCantidad() != null ? 
                 stockCatalogue.getStockCantidad() : 0;
-            stockCatalogue.setStockCantidad(currentStockCantidad + createProductDto.getTotalEnvases());
+            stockCatalogue.setStockCantidad(currentStockCantidad + createProductDto.getNumeroContenedores());
 
             Integer currentEnvasesAprobados = stockCatalogue.getEnvasesAprobados() != null ? 
                 stockCatalogue.getEnvasesAprobados() : 0;
-            stockCatalogue.setEnvasesAprobados(currentEnvasesAprobados + createProductDto.getTotalEnvases());
+            stockCatalogue.setEnvasesAprobados(currentEnvasesAprobados + createProductDto.getNumeroContenedores());
 
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
             
@@ -208,11 +239,17 @@ public class ProductService {
 
             logger.info("Product creation transaction completed successfully for lote: {}", createProductDto.getLote());
 
-            // Registrar log de auditoría
-            createAuditLog(String.format("Se agregó un producto: Lote %s (%s) - Catálogo: %s", 
-                createProductDto.getLote(), 
+            // Registrar log de auditoría mejorado con información detallada
+            String auditMessage = String.format(
+                "CREACIÓN DE PRODUCTO - Usuario: %s | Producto: %s (ID: %d) | Lote: %s | Estado: %s | Catálogo: %s",
+                currentUser.getName() != null ? currentUser.getName() : currentUser.getEmail(),
                 savedProduct.getNombre(),
-                stockCatalogue.getName()));
+                savedProduct.getId(),
+                savedProduct.getLote(),
+                productStatus.getName(),
+                stockCatalogue.getName()
+            );
+            createAuditLog(auditMessage, currentUser, savedProduct);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ResponseObject("Product created successfully", responseData, TypeResponse.SUCCESS)
@@ -322,11 +359,35 @@ public class ProductService {
                 existingProduct.setStockCatalogue(stockCatalogue);
             }
 
+            // Obtener usuario autenticado para el log
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            User currentUser = userRepository.findByEmail(auth.getName())
+                .orElse(null);
+
+            // Guardar estado anterior para el log
+            ProductStatus oldStatus = existingProduct.getProductStatus();
+            String oldStatusName = oldStatus != null ? oldStatus.getName() : "N/A";
+
+            // Validar y actualizar warehouse type si se proporciona
+            if (updateProductDto.getWarehouseTypeId() != null) {
+                WarehouseType warehouseType = warehouseTypeRepository.findByIdAndDeletedAtIsNull(updateProductDto.getWarehouseTypeId())
+                    .orElseThrow(() -> new RuntimeException("Warehouse type not found or deleted"));
+                existingProduct.setWarehouseType(warehouseType);
+            }
+
+            // Validar y actualizar unit of measurement si se proporciona
+            if (updateProductDto.getUnitOfMeasurementId() != null) {
+                UnitOfMeasurement unitOfMeasurement = unitOfMeasurementRepository.findByIdAndDeletedAtIsNull(updateProductDto.getUnitOfMeasurementId())
+                    .orElseThrow(() -> new RuntimeException("Unit of measurement not found or deleted"));
+                existingProduct.setUnitOfMeasurement(unitOfMeasurement);
+            }
+
             // Validar y actualizar product status si se proporciona (permite cambiar estado)
+            ProductStatus newStatus = null;
             if (updateProductDto.getProductStatusId() != null) {
-                ProductStatus productStatus = productStatusRepository.findByIdAndDeletedAtIsNull(updateProductDto.getProductStatusId())
+                newStatus = productStatusRepository.findByIdAndDeletedAtIsNull(updateProductDto.getProductStatusId())
                     .orElseThrow(() -> new RuntimeException("Product status not found or deleted"));
-                existingProduct.setProductStatus(productStatus);
+                existingProduct.setProductStatus(newStatus);
             }
 
             // Actualizar campos opcionales
@@ -342,6 +403,12 @@ public class ProductService {
             if (updateProductDto.getDistribuidor() != null) {
                 existingProduct.setDistribuidor(updateProductDto.getDistribuidor());
             }
+            if (updateProductDto.getCodigoProducto() != null) {
+                existingProduct.setCodigoProducto(updateProductDto.getCodigoProducto());
+            }
+            if (updateProductDto.getNumeroAnalisis() != null) {
+                existingProduct.setNumeroAnalisis(updateProductDto.getNumeroAnalisis());
+            }
             if (updateProductDto.getFechaIngreso() != null) {
                 existingProduct.setFecha(updateProductDto.getFechaIngreso());
             }
@@ -351,6 +418,22 @@ public class ProductService {
             if (updateProductDto.getReanalisis() != null) {
                 existingProduct.setReanalisis(updateProductDto.getReanalisis());
             }
+            if (updateProductDto.getNumeroContenedores() != null) {
+                existingProduct.setNumeroContenedores(updateProductDto.getNumeroContenedores());
+            }
+            if (updateProductDto.getCantidadTotal() != null) {
+                existingProduct.setCantidadTotal(updateProductDto.getCantidadTotal());
+            }
+            if (updateProductDto.getDescuentos() != null) {
+                existingProduct.setDescuentos(updateProductDto.getDescuentos());
+            }
+
+            // Recalcular automáticamente cantidadSobrante y totalSobrante cuando se actualicen cantidadTotal o descuentos
+            Integer cantidadTotalValue = existingProduct.getCantidadTotal() != null ? existingProduct.getCantidadTotal() : 0;
+            Integer descuentosValue = existingProduct.getDescuentos() != null ? existingProduct.getDescuentos() : 0;
+            BigDecimal cantidadSobranteCalculada = BigDecimal.valueOf(cantidadTotalValue - descuentosValue);
+            existingProduct.setCantidadSobrante(cantidadSobranteCalculada);
+            existingProduct.setTotalSobrante(cantidadSobranteCalculada);
 
             existingProduct.setUpdatedAt(LocalDateTime.now());
 
@@ -359,12 +442,23 @@ public class ProductService {
 
             logger.info("Product updated successfully: Product ID {}", updatedProduct.getId());
 
-            // Registrar log de auditoría
-            String statusInfo = updatedProduct.getProductStatus() != null 
-                ? String.format(" - Estado: %s", updatedProduct.getProductStatus().getName())
-                : "";
-            createAuditLog(String.format("Se actualizó el producto: Lote %s (%s) - ID: %d%s", 
-                updatedProduct.getLote(), updatedProduct.getNombre(), updatedProduct.getId(), statusInfo));
+            // Registrar log de auditoría mejorado con información detallada
+            String statusChangeInfo = "";
+            if (newStatus != null && !oldStatusName.equals(newStatus.getName())) {
+                statusChangeInfo = String.format(" | Cambio de estado: %s -> %s", oldStatusName, newStatus.getName());
+            } else if (updatedProduct.getProductStatus() != null) {
+                statusChangeInfo = String.format(" | Estado: %s", updatedProduct.getProductStatus().getName());
+            }
+            
+            String auditMessage = String.format(
+                "MODIFICACIÓN DE PRODUCTO - Usuario: %s | Producto: %s (ID: %d) | Lote: %s%s",
+                currentUser != null ? (currentUser.getName() != null ? currentUser.getName() : currentUser.getEmail()) : "ANONYMOUS",
+                updatedProduct.getNombre(),
+                updatedProduct.getId(),
+                updatedProduct.getLote(),
+                statusChangeInfo
+            );
+            createAuditLog(auditMessage, currentUser, updatedProduct);
 
             return ResponseEntity.ok(
                 new ResponseObject("Product updated successfully", responseDto, TypeResponse.SUCCESS)
@@ -410,17 +504,7 @@ public class ProductService {
                 productsPage.map(this::convertToResponseDto)
             );
 
-            // Registrar log de auditoría
-            String filterInfo = "";
-            if (stockCatalogueId != null && productStatusId != null) {
-                filterInfo = String.format(" con filtros: Catálogo ID %d y Estado ID %d", stockCatalogueId, productStatusId);
-            } else if (stockCatalogueId != null) {
-                filterInfo = String.format(" con filtro: Catálogo ID %d", stockCatalogueId);
-            } else if (productStatusId != null) {
-                filterInfo = String.format(" con filtro: Estado ID %d", productStatusId);
-            }
-            createAuditLog(String.format("Se consultó la lista de productos%s (Página %d, Tamaño %d)", 
-                filterInfo, page, size));
+            // NO registrar log de auditoría para consultas (evitar spam)
 
             return ResponseEntity.ok(
                 new ResponseObject("Products retrieved successfully", pageResponse, TypeResponse.SUCCESS)
@@ -483,9 +567,16 @@ public class ProductService {
         dto.setFabricante(product.getFabricante());
         dto.setDistribuidor(product.getDistribuidor());
         dto.setCodigo(product.getCodigo());
+        dto.setCodigoProducto(product.getCodigoProducto());
+        dto.setNumeroAnalisis(product.getNumeroAnalisis());
         dto.setFecha(product.getFecha());
         dto.setCaducidad(product.getCaducidad());
         dto.setReanalisis(product.getReanalisis());
+        dto.setCantidadSobrante(product.getCantidadSobrante());
+        dto.setTotalSobrante(product.getTotalSobrante());
+        dto.setNumeroContenedores(product.getNumeroContenedores());
+        dto.setCantidadTotal(product.getCantidadTotal());
+        dto.setDescuentos(product.getDescuentos());
         dto.setCreatedAt(product.getCreatedAt());
         dto.setUpdatedAt(product.getUpdatedAt());
 
@@ -508,6 +599,20 @@ public class ProductService {
             dto.setCreatedByUserName(product.getCreatedByUser().getName());
         }
 
+        // Información del warehouse type
+        if (product.getWarehouseType() != null) {
+            dto.setWarehouseTypeId(product.getWarehouseType().getId());
+            dto.setWarehouseTypeCode(product.getWarehouseType().getCode());
+            dto.setWarehouseTypeName(product.getWarehouseType().getName());
+        }
+
+        // Información de unidad de medida
+        if (product.getUnitOfMeasurement() != null) {
+            dto.setUnitOfMeasurementId(product.getUnitOfMeasurement().getId());
+            dto.setUnitOfMeasurementName(product.getUnitOfMeasurement().getName());
+            dto.setUnitOfMeasurementCode(product.getUnitOfMeasurement().getCode());
+        }
+
         // Información del stock (después del producto)
         if (product.getStockCatalogue() != null) {
             StockCatalogue stockCatalogue = product.getStockCatalogue();
@@ -516,14 +621,14 @@ public class ProductService {
             dto.setStockCatalogueSku(stockCatalogue.getSku());
             dto.setStockCatalogueUnidad(stockCatalogue.getUnidad());
             
-            // Métricas de stock calculadas
-            Integer cantidadTotal = stockCatalogue.getStockCantidad() != null ? stockCatalogue.getStockCantidad() : 0;
-            Integer descuentos = calculateDescuentos(stockCatalogue);
-            Integer cantidadSobrante = Math.max(0, cantidadTotal - descuentos);
+            // Métricas de stock calculadas desde StockCatalogue
+            Integer stockCantidadTotal = stockCatalogue.getStockCantidad() != null ? stockCatalogue.getStockCantidad() : 0;
+            Integer stockDescuentos = calculateDescuentos(stockCatalogue);
+            Integer cantidadSobranteCalculada = Math.max(0, stockCantidadTotal - stockDescuentos);
             
-            dto.setCantidadTotal(cantidadTotal);
-            dto.setDescuentos(descuentos);
-            dto.setCantidadSobrante(cantidadSobrante);
+            dto.setStockCantidadTotal(stockCantidadTotal);
+            dto.setStockDescuentos(stockDescuentos);
+            dto.setCantidadSobranteCalculada(cantidadSobranteCalculada);
             dto.setEnvasesRechazados(stockCatalogue.getEnvasesRechazados());
             dto.setEnvasesAprobados(stockCatalogue.getEnvasesAprobados());
         }
@@ -548,8 +653,7 @@ public class ProductService {
             
             logger.info("QR code image generated successfully for hash: {}", qrHash);
             
-            // Registrar log de auditoría
-            createAuditLog(String.format("Se generó la imagen QR para el hash: %s", qrHash));
+            // NO registrar log de auditoría para consultas/generación de imágenes (evitar spam)
             
             return qrImage;
         } catch (WriterException | IOException e) {
