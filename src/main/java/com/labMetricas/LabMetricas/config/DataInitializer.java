@@ -295,22 +295,18 @@ public class DataInitializer implements CommandLineRunner {
                 return;
             }
 
-            // Create sample stock catalogues
+            // Create sample stock catalogues (solo contenedor/diccionario)
             createStockCatalogueIfNotExists("Azúcar Morena", "SKU-AZU-001", 
-                "Azúcar morena", "kg", 
-                50, adminUser);
+                "Azúcar morena", adminUser);
 
             createStockCatalogueIfNotExists("Harina de Trigo", "SKU-HAR-002", 
-                "Harina de trigo", "kg", 
-                25, adminUser);
+                "Harina de trigo", adminUser);
 
             createStockCatalogueIfNotExists("Aceite Vegetal", "SKU-ACE-003", 
-                "Aceite vegetal", "litros", 
-                12, adminUser);
+                "Aceite vegetal", adminUser);
 
             createStockCatalogueIfNotExists("Sal de Mesa", "SKU-SAL-004", 
-                "Sal de mesa", "kg", 
-                5, adminUser);
+                "Sal de mesa", adminUser);
 
             logger.info("Stock catalogues initialized successfully");
         } else {
@@ -319,16 +315,12 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void createStockCatalogueIfNotExists(String name, String sku, String description, 
-            String unidad, Integer cantidad, User createdByUser) {
+            User createdByUser) {
         if (!stockCatalogueRepository.existsBySku(sku)) {
             StockCatalogue stockCatalogue = new StockCatalogue();
             stockCatalogue.setName(name);
             stockCatalogue.setSku(sku);
             stockCatalogue.setDescription(description);
-            stockCatalogue.setUnidad(unidad);
-            stockCatalogue.setStockActual(BigDecimal.ZERO);
-            stockCatalogue.setCantidad(cantidad != null ? cantidad : 0);
-            stockCatalogue.setStockCantidad(0);
             stockCatalogue.setStatus(true); // Activo por defecto
             stockCatalogue.setCreatedByUser(createdByUser);
             stockCatalogue.setCreatedAt(LocalDateTime.now());
@@ -505,19 +497,7 @@ public class DataInitializer implements CommandLineRunner {
             movement.setUpdatedAt(LocalDateTime.now());
             productStockMovementRepository.save(movement);
 
-            // Update Stock Catalogue stock_actual
-            BigDecimal currentStock = stockCatalogue.getStockActual() != null ? 
-                stockCatalogue.getStockActual() : BigDecimal.ZERO;
-            stockCatalogue.setStockActual(currentStock.add(BigDecimal.valueOf(totalEnvases)));
-            if (stockCatalogue.getCantidad() == null || stockCatalogue.getCantidad() == 0) {
-                stockCatalogue.setCantidad(cantidad);
-            }
-            Integer currentStockCantidad = stockCatalogue.getStockCantidad() != null ? 
-                stockCatalogue.getStockCantidad() : 0;
-            stockCatalogue.setStockCantidad(currentStockCantidad + totalEnvases);
-            Integer currentEnvasesAprobados = stockCatalogue.getEnvasesAprobados() != null ? 
-                stockCatalogue.getEnvasesAprobados() : 0;
-            stockCatalogue.setEnvasesAprobados(currentEnvasesAprobados + totalEnvases);
+            // Actualizar timestamp del StockCatalogue (los conteos se calculan dinámicamente desde los productos)
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
             stockCatalogueRepository.save(stockCatalogue);
 

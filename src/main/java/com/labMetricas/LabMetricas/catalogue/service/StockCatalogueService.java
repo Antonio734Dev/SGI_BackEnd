@@ -94,17 +94,6 @@ public class StockCatalogueService {
             stockCatalogue.setName(stockCatalogueDto.getName());
             stockCatalogue.setSku(stockCatalogueDto.getSku());
             stockCatalogue.setDescription(stockCatalogueDto.getDescription());
-            stockCatalogue.setUnidad(stockCatalogueDto.getUnidad());
-            // IMPORTANT: stock_actual is always initialized to 0
-            stockCatalogue.setStockActual(BigDecimal.ZERO);
-            stockCatalogue.setStockCantidad(
-                stockCatalogueDto.getStockCantidad() != null ? stockCatalogueDto.getStockCantidad() : 0);
-            stockCatalogue.setCantidad(
-                stockCatalogueDto.getCantidad() != null ? stockCatalogueDto.getCantidad() : 0);
-            stockCatalogue.setEnvasesRechazados(
-                stockCatalogueDto.getEnvasesRechazados() != null ? stockCatalogueDto.getEnvasesRechazados() : 0);
-            stockCatalogue.setEnvasesAprobados(
-                stockCatalogueDto.getEnvasesAprobados() != null ? stockCatalogueDto.getEnvasesAprobados() : 0);
             stockCatalogue.setStatus(stockCatalogueDto.getStatus() != null ? stockCatalogueDto.getStatus() : true);
             stockCatalogue.setCreatedByUser(currentUser);
             stockCatalogue.setCreatedAt(LocalDateTime.now());
@@ -151,23 +140,9 @@ public class StockCatalogueService {
             }
 
             // Update stock catalogue details
-            // IMPORTANT: stock_actual is NOT updated directly - it's only modified through movements
             existingStockCatalogue.setName(stockCatalogueDto.getName());
             existingStockCatalogue.setSku(stockCatalogueDto.getSku());
             existingStockCatalogue.setDescription(stockCatalogueDto.getDescription());
-            existingStockCatalogue.setUnidad(stockCatalogueDto.getUnidad());
-            if (stockCatalogueDto.getStockCantidad() != null) {
-                existingStockCatalogue.setStockCantidad(stockCatalogueDto.getStockCantidad());
-            }
-            if (stockCatalogueDto.getCantidad() != null) {
-                existingStockCatalogue.setCantidad(stockCatalogueDto.getCantidad());
-            }
-            if (stockCatalogueDto.getEnvasesRechazados() != null) {
-                existingStockCatalogue.setEnvasesRechazados(stockCatalogueDto.getEnvasesRechazados());
-            }
-            if (stockCatalogueDto.getEnvasesAprobados() != null) {
-                existingStockCatalogue.setEnvasesAprobados(stockCatalogueDto.getEnvasesAprobados());
-            }
             if (stockCatalogueDto.getStatus() != null) {
                 existingStockCatalogue.setStatus(stockCatalogueDto.getStatus());
             }
@@ -317,8 +292,7 @@ public class StockCatalogueService {
     }
 
     /**
-     * Calcula los descuentos (productos con estado "terminado") para un stock
-     * Suma las cantidades de movimientos de entrada iniciales de productos terminados
+     * Calcula los descuentos (suma de descuentos de productos con estado "terminado") para un stock
      */
     private Integer calculateDescuentos(StockCatalogue stockCatalogue) {
         try {
@@ -331,26 +305,50 @@ public class StockCatalogueService {
                 return 0;
             }
 
-            // Sumar las cantidades de movimientos de entrada iniciales para estos productos
+            // Sumar los descuentos de los productos terminados
             int totalDescuentos = 0;
             for (Product product : productosTerminados) {
-                // Buscar movimientos de entrada con referencia que contiene el lote
-                var movimientos = productStockMovementRepository
-                    .findByStockCatalogueIdAndDeletedAtIsNull(stockCatalogue.getId());
-                
-                for (var movimiento : movimientos) {
-                    if (movimiento.getTipo() == TipoMovimiento.entrada && 
-                        movimiento.getReferencia() != null &&
-                        movimiento.getReferencia().contains("Lote " + product.getLote())) {
-                        totalDescuentos += movimiento.getCantidad().intValue();
-                        break; // Solo contar el movimiento inicial de cada producto
-                    }
+                if (product.getDescuentos() != null) {
+                    totalDescuentos += product.getDescuentos();
                 }
             }
 
             return totalDescuentos;
         } catch (Exception e) {
             logger.warn("Error calculating descuentos for stock catalogue {}: {}", stockCatalogue.getId(), e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Calcula el total de productos referenciados a este stock
+     */
+    private Integer calculateTotalProductos(StockCatalogue stockCatalogue) {
+        try {
+            var productos = productRepository.findByStockCatalogueIdAndDeletedAtIsNull(stockCatalogue.getId());
+            return productos.size();
+        } catch (Exception e) {
+            logger.warn("Error calculating total productos for stock catalogue {}: {}", stockCatalogue.getId(), e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Calcula la cantidad sobrante total (suma de cantidadTotal de productos - descuentos)
+     */
+    private Integer calculateCantidadSobrante(StockCatalogue stockCatalogue) {
+        try {
+            var productos = productRepository.findByStockCatalogueIdAndDeletedAtIsNull(stockCatalogue.getId());
+            int totalCantidad = 0;
+            for (Product product : productos) {
+                if (product.getCantidadTotal() != null) {
+                    totalCantidad += product.getCantidadTotal();
+                }
+            }
+            int descuentos = calculateDescuentos(stockCatalogue);
+            return Math.max(0, totalCantidad - descuentos);
+        } catch (Exception e) {
+            logger.warn("Error calculating cantidad sobrante for stock catalogue {}: {}", stockCatalogue.getId(), e.getMessage());
             return 0;
         }
     }
@@ -362,19 +360,12 @@ public class StockCatalogueService {
         dto.setName(stockCatalogue.getName());
         dto.setSku(stockCatalogue.getSku());
         dto.setDescription(stockCatalogue.getDescription());
-        dto.setUnidad(stockCatalogue.getUnidad());
-        dto.setStockActual(stockCatalogue.getStockActual());
-        dto.setStockCantidad(stockCatalogue.getStockCantidad());
-        dto.setCantidad(stockCatalogue.getCantidad());
-        dto.setEnvasesRechazados(stockCatalogue.getEnvasesRechazados());
-        dto.setEnvasesAprobados(stockCatalogue.getEnvasesAprobados());
         
-        // Calcular descuentos y cantidad sobrante
-        Integer descuentos = calculateDescuentos(stockCatalogue);
-        Integer cantidadTotal = stockCatalogue.getStockCantidad() != null ? stockCatalogue.getStockCantidad() : 0;
-        Integer cantidadSobrante = Math.max(0, cantidadTotal - descuentos);
+        // Calcular conteos desde los productos asociados
+        Integer totalProductos = calculateTotalProductos(stockCatalogue);
+        Integer cantidadSobrante = calculateCantidadSobrante(stockCatalogue);
         
-        dto.setDescuentos(descuentos);
+        dto.setTotalProductos(totalProductos);
         dto.setCantidadSobrante(cantidadSobrante);
         dto.setStatus(stockCatalogue.getStatus());
         

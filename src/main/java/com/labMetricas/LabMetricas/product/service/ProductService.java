@@ -206,28 +206,12 @@ public class ProductService {
             ProductStockMovement savedMovement = productStockMovementRepository.save(movement);
             logger.info("Stock movement saved with ID: {}", savedMovement.getId());
 
-            // PASO E: Actualizar Stock Global
-            logger.info("Updating stock catalogue stock_actual...");
-            BigDecimal currentStock = stockCatalogue.getStockActual() != null ? 
-                stockCatalogue.getStockActual() : BigDecimal.ZERO;
-            BigDecimal newStock = currentStock.add(BigDecimal.valueOf(createProductDto.getNumeroContenedores()));
-            stockCatalogue.setStockActual(newStock);
-
-            if (stockCatalogue.getCantidad() == null || stockCatalogue.getCantidad() == 0) {
-                stockCatalogue.setCantidad(createProductDto.getCantidad());
-            }
-            Integer currentStockCantidad = stockCatalogue.getStockCantidad() != null ? 
-                stockCatalogue.getStockCantidad() : 0;
-            stockCatalogue.setStockCantidad(currentStockCantidad + createProductDto.getNumeroContenedores());
-
-            Integer currentEnvasesAprobados = stockCatalogue.getEnvasesAprobados() != null ? 
-                stockCatalogue.getEnvasesAprobados() : 0;
-            stockCatalogue.setEnvasesAprobados(currentEnvasesAprobados + createProductDto.getNumeroContenedores());
-
+            // PASO E: Actualizar timestamp del StockCatalogue (los conteos se calculan dinámicamente desde los productos)
+            logger.info("Updating stock catalogue timestamp...");
             stockCatalogue.setUpdatedAt(LocalDateTime.now());
             
             StockCatalogue updatedStockCatalogue = stockCatalogueRepository.save(stockCatalogue);
-            logger.info("Stock catalogue updated. New stock_actual: {}", updatedStockCatalogue.getStockActual());
+            logger.info("Stock catalogue updated. Product count will be calculated dynamically.");
 
             // Preparar respuesta
             Map<String, Object> responseData = new HashMap<>();
@@ -235,7 +219,6 @@ public class ProductService {
             responseData.put("qrCodeId", savedQrCode.getId());
             responseData.put("qrHash", qrHash);
             responseData.put("movementId", savedMovement.getId());
-            responseData.put("stockActual", updatedStockCatalogue.getStockActual());
 
             logger.info("Product creation transaction completed successfully for lote: {}", createProductDto.getLote());
 
@@ -518,41 +501,6 @@ public class ProductService {
     }
 
     /**
-     * Calcula los descuentos (productos con estado "terminado") para un stock
-     */
-    private Integer calculateDescuentos(StockCatalogue stockCatalogue) {
-        try {
-            var productosTerminados = productRepository.findByStockCatalogueIdAndProductStatusNameIgnoreCaseAndDeletedAtIsNull(
-                stockCatalogue.getId(), "terminado"
-            );
-
-            if (productosTerminados.isEmpty()) {
-                return 0;
-            }
-
-            int totalDescuentos = 0;
-            for (Product product : productosTerminados) {
-                var movimientos = productStockMovementRepository
-                    .findByStockCatalogueIdAndDeletedAtIsNull(stockCatalogue.getId());
-                
-                for (var movimiento : movimientos) {
-                    if (movimiento.getTipo() == TipoMovimiento.entrada && 
-                        movimiento.getReferencia() != null &&
-                        movimiento.getReferencia().contains("Lote " + product.getLote())) {
-                        totalDescuentos += movimiento.getCantidad().intValue();
-                        break;
-                    }
-                }
-            }
-
-            return totalDescuentos;
-        } catch (Exception e) {
-            logger.warn("Error calculating descuentos for stock catalogue {}: {}", stockCatalogue.getId(), e.getMessage());
-            return 0;
-        }
-    }
-
-    /**
      * Convierte Product a ProductResponseDto con nombres legibles
      * Primero datos del producto, luego datos del stock
      */
@@ -619,18 +567,8 @@ public class ProductService {
             dto.setStockCatalogueId(stockCatalogue.getId());
             dto.setStockCatalogueName(stockCatalogue.getName());
             dto.setStockCatalogueSku(stockCatalogue.getSku());
-            dto.setStockCatalogueUnidad(stockCatalogue.getUnidad());
-            
-            // Métricas de stock calculadas desde StockCatalogue
-            Integer stockCantidadTotal = stockCatalogue.getStockCantidad() != null ? stockCatalogue.getStockCantidad() : 0;
-            Integer stockDescuentos = calculateDescuentos(stockCatalogue);
-            Integer cantidadSobranteCalculada = Math.max(0, stockCantidadTotal - stockDescuentos);
-            
-            dto.setStockCantidadTotal(stockCantidadTotal);
-            dto.setStockDescuentos(stockDescuentos);
-            dto.setCantidadSobranteCalculada(cantidadSobranteCalculada);
-            dto.setEnvasesRechazados(stockCatalogue.getEnvasesRechazados());
-            dto.setEnvasesAprobados(stockCatalogue.getEnvasesAprobados());
+            // Las métricas de stock ahora se calculan dinámicamente desde los productos
+            // StockCatalogue es solo un contenedor/diccionario
         }
 
         return dto;

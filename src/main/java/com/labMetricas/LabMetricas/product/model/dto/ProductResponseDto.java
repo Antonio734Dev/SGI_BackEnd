@@ -74,13 +74,5 @@ public class ProductResponseDto {
     private Integer stockCatalogueId;
     private String stockCatalogueName;
     private String stockCatalogueSku;
-    private String stockCatalogueUnidad;
-    
-    // Métricas de stock (calculadas desde StockCatalogue)
-    private Integer stockCantidadTotal; // stock_cantidad del catálogo (máximo acumulado)
-    private Integer stockDescuentos; // Descuentos calculados del catálogo (productos terminados)
-    private Integer cantidadSobranteCalculada; // stockCantidadTotal - stockDescuentos
-    private Integer envasesRechazados;
-    private Integer envasesAprobados;
 }
 

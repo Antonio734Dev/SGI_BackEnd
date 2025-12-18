@@ -29,24 +29,9 @@ public class StockCatalogueDto {
     @Size(max = 1000, message = "Description must be less than 1000 characters")
     private String description;
 
-    @NotBlank(message = "Unidad is required")
-    @Size(max = 50, message = "Unidad must be less than 50 characters")
-    private String unidad;
-
-    // Stock actual is read-only, should not be set in DTOs for create/update
-    private BigDecimal stockActual;
-
-    private Integer stockCantidad;
-
-    private Integer cantidad;
-
-    private Integer envasesRechazados;
-
-    private Integer envasesAprobados;
-
-    // Campos calculados
-    private Integer descuentos; // Productos con estado "terminado"
-    private Integer cantidadSobrante; // stock_cantidad - descuentos
+    // Campos calculados desde los productos asociados
+    private Integer totalProductos; // Conteo total de productos referenciados a este stock
+    private Integer cantidadSobrante; // Suma de cantidadTotal de productos - descuentos
 
     private Boolean status; // Estado activo/inactivo
 
