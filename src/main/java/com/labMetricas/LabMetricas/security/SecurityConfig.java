@@ -126,6 +126,7 @@ public class SecurityConfig {
             "http://localhost:3000",
             "http://localhost:5173",
             "http://localhost:8080",
+            "http://localhost:8081",
             "https://sgi-front-end-git-main-antonios-projects-8bf8b09e.vercel.app",
             "https://sgi-front-end-gules.vercel.app"
         );

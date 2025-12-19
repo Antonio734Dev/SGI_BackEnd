@@ -7,6 +7,8 @@ import com.labMetricas.LabMetricas.status.repository.ProductStatusRepository;
 import com.labMetricas.LabMetricas.user.model.User;
 import com.labMetricas.LabMetricas.user.repository.UserRepository;
 import com.labMetricas.LabMetricas.util.ResponseObject;
+import com.labMetricas.LabMetricas.auditLog.model.AuditLog;
+import com.labMetricas.LabMetricas.auditLog.repository.AuditLogRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +32,35 @@ public class ProductStatusService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AuditLogRepository auditLogRepository;
+
+    // Método helper para crear logs de auditoría
+    private void createAuditLog(String action) {
+        try {
+            // Obtener el usuario actual autenticado
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            User currentUser = null;
+            
+            if (authentication != null && authentication.isAuthenticated()) {
+                String email = authentication.getName();
+                currentUser = userRepository.findByEmail(email).orElse(null);
+            }
+            
+            AuditLog auditLog = new AuditLog();
+            auditLog.setAction(action);
+            auditLog.setUser(currentUser);
+            auditLog.setCreatedAt(LocalDateTime.now());
+            auditLogRepository.save(auditLog);
+            
+            logger.debug("Audit log created: {} by user: {}", action, 
+                currentUser != null ? currentUser.getEmail() : "ANONYMOUS");
+        } catch (Exception e) {
+            logger.error("Error creating audit log: {}", action, e);
+            // No lanzar excepción para no interrumpir el flujo principal
+        }
+    }
 
     @Transactional
     public ResponseEntity<ResponseObject> createProductStatus(ProductStatusDto productStatusDto) {
@@ -58,6 +89,9 @@ public class ProductStatusService {
             ProductStatusDto responseDto = convertToDto(savedProductStatus);
 
             logger.info("Product status created successfully: {}", savedProductStatus.getName());
+
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se agregó un estado de producto: %s", savedProductStatus.getName()));
 
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ResponseObject("Product status created successfully", responseDto, TypeResponse.SUCCESS)
@@ -97,6 +131,10 @@ public class ProductStatusService {
             ProductStatusDto responseDto = convertToDto(updatedProductStatus);
 
             logger.info("Product status updated successfully: {}", updatedProductStatus.getName());
+
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se actualizó el estado de producto: %s (ID: %d)", 
+                updatedProductStatus.getName(), updatedProductStatus.getId()));
 
             return ResponseEntity.ok(
                 new ResponseObject("Product status updated successfully", responseDto, TypeResponse.SUCCESS)

@@ -176,9 +176,7 @@ public class StockCatalogueService {
             StockCatalogue stockCatalogue = stockCatalogueRepository.findByIdAndStatusTrue(id)
                 .orElseThrow(() -> new RuntimeException("Stock catalogue not found or inactive"));
 
-            // Registrar log de auditoría
-            createAuditLog(String.format("Se consultó el catálogo de stock con ID: %d (%s)", 
-                id, stockCatalogue.getName()));
+            // NO registrar log de auditoría para consultas (evitar spam)
 
             return ResponseEntity.ok(
                 new ResponseObject("Stock catalogue retrieved successfully", convertToDto(stockCatalogue), TypeResponse.SUCCESS)
@@ -214,11 +212,7 @@ public class StockCatalogueService {
                 .map(this::convertToDto)
                 .collect(java.util.stream.Collectors.toList());
 
-            // Registrar log de auditoría
-            String searchInfo = search != null && !search.trim().isEmpty() 
-                ? String.format(" con búsqueda: '%s'", search) 
-                : "";
-            createAuditLog(String.format("Se consultó la lista de catálogos de stock%s", searchInfo));
+            // NO registrar log de auditoría para consultas (evitar spam)
 
             return ResponseEntity.ok(
                 new ResponseObject("Stock catalogues retrieved successfully", dtos, TypeResponse.SUCCESS)

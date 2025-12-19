@@ -152,6 +152,10 @@ public class UserService {
             UserDto responseDto = convertToDto(savedUser);
             responseDto.setTemporaryPassword(rawPassword);
             sendWelcomeEmail(savedUser.getEmail(), rawPassword, savedUser.getName());
+            
+            // Registrar log de auditoría
+            createAuditLog(String.format("Se agregó un usuario: %s (%s)", savedUser.getName(), savedUser.getEmail()), savedUser);
+            
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ResponseObject("User created successfully", responseDto, TypeResponse.SUCCESS)
             );
@@ -241,8 +245,7 @@ public class UserService {
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
 
-            // Registrar log de auditoría
-            createAuditLog("Se consultó la lista de usuarios", null);
+            // NO registrar log de auditoría para consultas (evitar spam)
 
             return ResponseEntity.ok(
                 new ResponseObject("Users retrieved successfully", users, TypeResponse.SUCCESS)
@@ -264,8 +267,7 @@ public class UserService {
                     .map(this::convertToDto)
                     .collect(Collectors.toList());
 
-            // Registrar log de auditoría
-            createAuditLog("Se consultó la lista de usuarios (excluyendo usuario actual)", null);
+            // NO registrar log de auditoría para consultas (evitar spam)
 
             return ResponseEntity.ok(
                     new ResponseObject("Users retrieved successfully (excluding current)", users, TypeResponse.SUCCESS)
@@ -444,8 +446,7 @@ public class UserService {
             User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Registrar log de auditoría
-            createAuditLog(String.format("Se consultó el usuario con email: %s", email), user);
+            // NO registrar log de auditoría para consultas (evitar spam)
 
             return ResponseEntity.ok(
                 new ResponseObject("User retrieved successfully", convertToDto(user), TypeResponse.SUCCESS)
