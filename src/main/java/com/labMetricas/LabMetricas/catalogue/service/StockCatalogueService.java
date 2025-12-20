@@ -291,7 +291,9 @@ public class StockCatalogueService {
     private Integer calculateTotalProductos(StockCatalogue stockCatalogue) {
         try {
             var productos = productRepository.findByStockCatalogueIdAndDeletedAtIsNull(stockCatalogue.getId());
-            return productos.size();
+            return productos.stream()
+                .map(p -> p.getCantidadTotal() != null ? p.getCantidadTotal() : 0)
+                .reduce(0, Integer::sum);
         } catch (Exception e) {
             logger.warn("Error calculating total productos for stock catalogue {}: {}", stockCatalogue.getId(), e.getMessage());
             return 0;

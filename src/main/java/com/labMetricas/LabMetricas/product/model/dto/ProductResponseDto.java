@@ -21,6 +21,7 @@ public class ProductResponseDto {
     private String nombre;
     private String lote; // Lote interno
     private String loteProveedor;
+    private String numeroSerie;
     private String fabricante;
     private String distribuidor;
     private String codigo;

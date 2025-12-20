@@ -343,22 +343,14 @@ public class DataInitializer implements CommandLineRunner {
 
             // Get stock catalogues and statuses
             StockCatalogue azucar = stockCatalogueRepository.findBySku("SKU-AZU-001").orElse(null);
-            StockCatalogue harina = stockCatalogueRepository.findBySku("SKU-HAR-002").orElse(null);
-            StockCatalogue aceite = stockCatalogueRepository.findBySku("SKU-ACE-003").orElse(null);
-            StockCatalogue sal = stockCatalogueRepository.findBySku("SKU-SAL-004").orElse(null);
 
             ProductStatus sellado = productStatusRepository.findByName("Sellado").orElse(null);
-            ProductStatus abierto = productStatusRepository.findByName("Abierto").orElse(null);
-            ProductStatus cuarentena = productStatusRepository.findByName("Cuarentena").orElse(null);
-            ProductStatus terminado = productStatusRepository.findByName("Terminado").orElse(null);
 
             // Get warehouse types
             WarehouseType mps = warehouseTypeRepository.findByCode("MPS").orElse(null);
-            WarehouseType mes = warehouseTypeRepository.findByCode("MES").orElse(null);
 
             // Get units of measurement
             UnitOfMeasurement kgUnit = unitOfMeasurementRepository.findByCode("KG").orElse(null);
-            UnitOfMeasurement lUnit = unitOfMeasurementRepository.findByCode("L").orElse(null);
 
             if (azucar == null || sellado == null) {
                 logger.warn("Required stock catalogue or status not found. Skipping product initialization.");
@@ -379,51 +371,6 @@ public class DataInitializer implements CommandLineRunner {
                 50, 15, adminUser,
                 "PROV-AZU-2024-002", "Azucarera del Sur S.A. de C.V.", "Distribuidora Central México",
                 mps, kgUnit, "AN-002", "COD-AZU-002", LocalDate.now().plusMonths(6), "SKU-AZU-001-LOTE-AZU-2024-002");
-
-            // Producto 3: Harina Abierto
-            if (harina != null && abierto != null) {
-                createProductWithQrAndMovement("LOTE-HAR-2024-001", harina, abierto, 
-                    LocalDate.now().minusDays(10), LocalDate.now().plusMonths(6), 
-                    25, 5, adminUser,
-                    "PROV-HAR-2024-001", "Molinos del Norte S.A.", "Distribuidora Alimentos Premium",
-                    mps, kgUnit, "AN-003", "COD-HAR-001", LocalDate.now().plusMonths(3), "SKU-HAR-002-LOTE-HAR-2024-001");
-            }
-
-            // Producto 4: Aceite en Cuarentena
-            if (aceite != null && cuarentena != null) {
-                createProductWithQrAndMovement("LOTE-ACE-2024-001", aceite, cuarentena, 
-                    LocalDate.now().minusDays(2), LocalDate.now().plusMonths(12), 
-                    12, 20, adminUser,
-                    "PROV-ACE-2024-001", "Aceites Vegetales Nacionales S.A.", "Distribuidora Oleaginosas S.A.",
-                    mes, lUnit, "AN-004", "COD-ACE-001", LocalDate.now().plusMonths(9), "SKU-ACE-003-LOTE-ACE-2024-001");
-            }
-
-            // Producto 5: Sal Sellado
-            if (sal != null && sellado != null) {
-                createProductWithQrAndMovement("LOTE-SAL-2024-001", sal, sellado, 
-                    LocalDate.now().minusDays(7), LocalDate.now().plusYears(2), 
-                    5, 8, adminUser,
-                    "PROV-SAL-2024-001", "Salinera Nacional S.A.", "Distribuidora Sal y Especias",
-                    mps, kgUnit, "AN-005", "COD-SAL-001", LocalDate.now().plusMonths(12), "SKU-SAL-004-LOTE-SAL-2024-001");
-            }
-
-            // Producto 6: Azúcar Terminado (para pruebas de descuentos)
-            if (azucar != null && terminado != null) {
-                createProductWithQrAndMovement("LOTE-AZU-2024-003", azucar, terminado, 
-                    LocalDate.now().minusDays(30), LocalDate.now().minusDays(5), 
-                    50, 3, adminUser,
-                    "PROV-AZU-2024-003", "Azucarera del Sur S.A. de C.V.", "Distribuidora Central México",
-                    mps, kgUnit, "AN-006", "COD-AZU-003", null, "SKU-AZU-001-LOTE-AZU-2024-003");
-            }
-
-            // Producto 7: Harina Sellado
-            if (harina != null && sellado != null) {
-                createProductWithQrAndMovement("LOTE-HAR-2024-002", harina, sellado, 
-                    LocalDate.now().minusDays(1), LocalDate.now().plusMonths(8), 
-                    25, 12, adminUser,
-                    "PROV-HAR-2024-002", "Molinos del Norte S.A.", "Distribuidora Alimentos Premium",
-                    mps, kgUnit, "AN-007", "COD-HAR-002", LocalDate.now().plusMonths(4), "SKU-HAR-002-LOTE-HAR-2024-002");
-            }
 
             logger.info("Products initialized successfully");
         } else {

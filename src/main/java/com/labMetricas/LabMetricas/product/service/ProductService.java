@@ -148,6 +148,7 @@ public class ProductService {
             product.setUnitOfMeasurement(unitOfMeasurement);
             product.setLote(createProductDto.getLote());
             product.setLoteProveedor(createProductDto.getLoteProveedor());
+            product.setNumeroSerie(createProductDto.getNumeroSerie());
             product.setFabricante(createProductDto.getFabricante());
             product.setDistribuidor(createProductDto.getDistribuidor());
             product.setCodigoProducto(createProductDto.getCodigoProducto());
@@ -168,8 +169,8 @@ public class ProductService {
             product.setCreatedAt(LocalDateTime.now());
             product.setUpdatedAt(LocalDateTime.now());
 
-            // Generar nombre y codigo basados en el catálogo
-            product.setNombre(stockCatalogue.getName());
+            // Asignar nombre (se define desde la request)
+            product.setNombre(createProductDto.getNombre() != null ? createProductDto.getNombre().trim() : null);
             product.setCodigo(generateProductCode(stockCatalogue, createProductDto.getLote()));
 
             Product savedProduct = productRepository.save(product);
@@ -365,6 +366,10 @@ public class ProductService {
                 existingProduct.setUnitOfMeasurement(unitOfMeasurement);
             }
 
+            if (updateProductDto.getNumeroSerie() != null) {
+                existingProduct.setNumeroSerie(updateProductDto.getNumeroSerie());
+            }
+
             // Validar y actualizar product status si se proporciona (permite cambiar estado)
             ProductStatus newStatus = null;
             if (updateProductDto.getProductStatusId() != null) {
@@ -391,6 +396,9 @@ public class ProductService {
             }
             if (updateProductDto.getNumeroAnalisis() != null) {
                 existingProduct.setNumeroAnalisis(updateProductDto.getNumeroAnalisis());
+            }
+            if (updateProductDto.getNombre() != null && !updateProductDto.getNombre().trim().isEmpty()) {
+                existingProduct.setNombre(updateProductDto.getNombre().trim());
             }
             if (updateProductDto.getFechaIngreso() != null) {
                 existingProduct.setFecha(updateProductDto.getFechaIngreso());
@@ -512,6 +520,7 @@ public class ProductService {
         dto.setNombre(product.getNombre());
         dto.setLote(product.getLote()); // Lote interno
         dto.setLoteProveedor(product.getLoteProveedor());
+        dto.setNumeroSerie(product.getNumeroSerie());
         dto.setFabricante(product.getFabricante());
         dto.setDistribuidor(product.getDistribuidor());
         dto.setCodigo(product.getCodigo());

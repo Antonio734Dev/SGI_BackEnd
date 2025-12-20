@@ -79,6 +79,9 @@ public class Product {
     @Column(name = "lote_proveedor", columnDefinition = "VARCHAR(100)", nullable = false, length = 100)
     private String loteProveedor;
 
+    @Column(name = "numero_serie", columnDefinition = "VARCHAR(100)", length = 100)
+    private String numeroSerie;
+
     @Column(name = "fabricante", columnDefinition = "VARCHAR(200)", length = 200)
     private String fabricante;
 

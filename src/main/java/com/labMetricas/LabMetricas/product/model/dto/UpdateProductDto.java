@@ -27,6 +27,9 @@ public class UpdateProductDto {
 
     private Integer unitOfMeasurementId;
 
+    @Size(max = 200, message = "Nombre must be less than 200 characters")
+    private String nombre;
+
     @Size(max = 100, message = "Lote must be less than 100 characters")
     private String lote;
 
@@ -38,6 +41,9 @@ public class UpdateProductDto {
 
     @Size(max = 200, message = "Distribuidor must be less than 200 characters")
     private String distribuidor;
+
+    @Size(max = 100, message = "Número de serie must be less than 100 characters")
+    private String numeroSerie;
 
     @Size(max = 50, message = "Código producto must be less than 50 characters")
     private String codigoProducto;
