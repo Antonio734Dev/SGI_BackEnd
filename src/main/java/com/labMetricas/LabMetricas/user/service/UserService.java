@@ -181,7 +181,6 @@ public class UserService {
             existingUser.setName(userDto.getName());
             existingUser.setPosition(userDto.getPosition());
             existingUser.setPhone(userDto.getPhone());
-            existingUser.setStatus(userDto.getStatus());
 
             Optional<User> user = userRepository.findByEmail(userDto.getEmail());
             if (user.isPresent() && !user.get().getId().equals(existingUser.getId())) {

@@ -67,6 +67,9 @@ public class Product {
     @Column(name = "fecha", columnDefinition = "DATE", nullable = false)
     private LocalDate fecha;
 
+    @Column(name = "muestreo", columnDefinition = "DATE")
+    private LocalDate fechaMuestreo;
+
     @Column(name = "codigo", columnDefinition = "VARCHAR(50)", nullable = false, length = 50)
     private String codigo;
 
@@ -79,9 +82,6 @@ public class Product {
     @Column(name = "lote_proveedor", columnDefinition = "VARCHAR(100)", nullable = false, length = 100)
     private String loteProveedor;
 
-    @Column(name = "numero_serie", columnDefinition = "VARCHAR(100)", length = 100)
-    private String numeroSerie;
-
     @Column(name = "fabricante", columnDefinition = "VARCHAR(200)", length = 200)
     private String fabricante;
 
@@ -91,23 +91,23 @@ public class Product {
     @Column(name = "numero_analisis", columnDefinition = "VARCHAR(50)", length = 50)
     private String numeroAnalisis;
 
-    @Column(name = "caducidad", columnDefinition = "DATE", nullable = false)
+    @Column(name = "caducidad", columnDefinition = "DATE")
     private LocalDate caducidad;
 
     @Column(name = "reanalisis", columnDefinition = "DATE")
     private LocalDate reanalisis;
 
-    /**
+    /*
      * Cantidad sobrante calculada: cantidadTotal - descuentos (resultado guardado).
      */
-    @Column(name = "cantidad_sobrante", columnDefinition = "DECIMAL(15,4)", precision = 15, scale = 4)
-    private BigDecimal cantidadSobrante;
+    //@Column(name = "cantidad_sobrante", columnDefinition = "DECIMAL(15,4)", precision = 15, scale = 4)
+    //private BigDecimal cantidadSobrante;
 
     /**
      * Total sobrante calculado: acumulado de lo que queda (cantidadTotal - descuentos) con mayor precisión.
      */
-    @Column(name = "total_sobrante", columnDefinition = "DECIMAL(15,4)", precision = 15, scale = 4)
-    private BigDecimal totalSobrante;
+    //@Column(name = "total_sobrante", columnDefinition = "DECIMAL(15,4)", precision = 15, scale = 4)
+    //private BigDecimal totalSobrante;
 
     @Column(name = "numero_contenedores", columnDefinition = "INT", nullable = false)
     private Integer numeroContenedores;

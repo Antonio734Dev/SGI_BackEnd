@@ -148,7 +148,7 @@ public class ProductService {
             product.setUnitOfMeasurement(unitOfMeasurement);
             product.setLote(createProductDto.getLote());
             product.setLoteProveedor(createProductDto.getLoteProveedor());
-            product.setNumeroSerie(createProductDto.getNumeroSerie());
+            product.setFechaMuestreo(createProductDto.getFechaMuestreo());
             product.setFabricante(createProductDto.getFabricante());
             product.setDistribuidor(createProductDto.getDistribuidor());
             product.setCodigoProducto(createProductDto.getCodigoProducto());
@@ -163,9 +163,7 @@ public class ProductService {
             // Calcular automáticamente cantidadSobrante y totalSobrante: cantidadTotal - descuentos
             Integer descuentosValue = product.getDescuentos() != null ? product.getDescuentos() : 0;
             BigDecimal cantidadSobranteCalculada = BigDecimal.valueOf(product.getCantidadTotal() - descuentosValue);
-            product.setCantidadSobrante(cantidadSobranteCalculada);
-            product.setTotalSobrante(cantidadSobranteCalculada);
-            
+
             product.setCreatedAt(LocalDateTime.now());
             product.setUpdatedAt(LocalDateTime.now());
 
@@ -366,10 +364,6 @@ public class ProductService {
                 existingProduct.setUnitOfMeasurement(unitOfMeasurement);
             }
 
-            if (updateProductDto.getNumeroSerie() != null) {
-                existingProduct.setNumeroSerie(updateProductDto.getNumeroSerie());
-            }
-
             // Validar y actualizar product status si se proporciona (permite cambiar estado)
             ProductStatus newStatus = null;
             if (updateProductDto.getProductStatusId() != null) {
@@ -406,6 +400,9 @@ public class ProductService {
             if (updateProductDto.getFechaCaducidad() != null) {
                 existingProduct.setCaducidad(updateProductDto.getFechaCaducidad());
             }
+            if (updateProductDto.getFechaMuestreo() != null) {
+                existingProduct.setFechaMuestreo(updateProductDto.getFechaMuestreo());
+            }
             if (updateProductDto.getReanalisis() != null) {
                 existingProduct.setReanalisis(updateProductDto.getReanalisis());
             }
@@ -423,8 +420,6 @@ public class ProductService {
             Integer cantidadTotalValue = existingProduct.getCantidadTotal() != null ? existingProduct.getCantidadTotal() : 0;
             Integer descuentosValue = existingProduct.getDescuentos() != null ? existingProduct.getDescuentos() : 0;
             BigDecimal cantidadSobranteCalculada = BigDecimal.valueOf(cantidadTotalValue - descuentosValue);
-            existingProduct.setCantidadSobrante(cantidadSobranteCalculada);
-            existingProduct.setTotalSobrante(cantidadSobranteCalculada);
 
             existingProduct.setUpdatedAt(LocalDateTime.now());
 
@@ -520,7 +515,6 @@ public class ProductService {
         dto.setNombre(product.getNombre());
         dto.setLote(product.getLote()); // Lote interno
         dto.setLoteProveedor(product.getLoteProveedor());
-        dto.setNumeroSerie(product.getNumeroSerie());
         dto.setFabricante(product.getFabricante());
         dto.setDistribuidor(product.getDistribuidor());
         dto.setCodigo(product.getCodigo());
@@ -529,8 +523,7 @@ public class ProductService {
         dto.setFecha(product.getFecha());
         dto.setCaducidad(product.getCaducidad());
         dto.setReanalisis(product.getReanalisis());
-        dto.setCantidadSobrante(product.getCantidadSobrante());
-        dto.setTotalSobrante(product.getTotalSobrante());
+        dto.setFechaMuestreo(product.getFechaMuestreo());
         dto.setNumeroContenedores(product.getNumeroContenedores());
         dto.setCantidadTotal(product.getCantidadTotal());
         dto.setDescuentos(product.getDescuentos());

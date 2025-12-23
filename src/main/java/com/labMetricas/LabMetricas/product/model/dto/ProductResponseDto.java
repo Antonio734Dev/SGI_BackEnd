@@ -21,7 +21,7 @@ public class ProductResponseDto {
     private String nombre;
     private String lote; // Lote interno
     private String loteProveedor;
-    private String numeroSerie;
+    private LocalDate fechaMuestreo;
     private String fabricante;
     private String distribuidor;
     private String codigo;
@@ -30,8 +30,8 @@ public class ProductResponseDto {
     private LocalDate fecha;
     private LocalDate caducidad;
     private LocalDate reanalisis;
-    private BigDecimal cantidadSobrante;
-    private BigDecimal totalSobrante;
+    //private BigDecimal cantidadSobrante;
+    //private BigDecimal totalSobrante;
     private Integer numeroContenedores;
     
     /**

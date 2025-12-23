@@ -1,5 +1,6 @@
 package com.labMetricas.LabMetricas.product.model.dto;
 
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -42,9 +43,6 @@ public class UpdateProductDto {
     @Size(max = 200, message = "Distribuidor must be less than 200 characters")
     private String distribuidor;
 
-    @Size(max = 100, message = "Número de serie must be less than 100 characters")
-    private String numeroSerie;
-
     @Size(max = 50, message = "Código producto must be less than 50 characters")
     private String codigoProducto;
 
@@ -54,6 +52,8 @@ public class UpdateProductDto {
     private LocalDate fechaIngreso;
 
     private LocalDate fechaCaducidad;
+
+    private LocalDate fechaMuestreo;
 
     private LocalDate reanalisis;
 

@@ -413,9 +413,7 @@ public class DataInitializer implements CommandLineRunner {
             
             // Calcular automáticamente cantidadSobrante y totalSobrante: cantidadTotal - descuentos
             BigDecimal cantidadSobranteCalculada = BigDecimal.valueOf(product.getCantidadTotal() - product.getDescuentos());
-            product.setCantidadSobrante(cantidadSobranteCalculada);
-            product.setTotalSobrante(cantidadSobranteCalculada);
-            
+
             product.setCreatedAt(LocalDateTime.now());
             product.setUpdatedAt(LocalDateTime.now());
 

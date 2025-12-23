@@ -46,9 +46,6 @@ public class CreateProductDto {
     @Size(max = 200, message = "Distribuidor must be less than 200 characters")
     private String distribuidor;
 
-    @Size(max = 100, message = "Número de serie must be less than 100 characters")
-    private String numeroSerie;
-
     @Size(max = 50, message = "Código producto must be less than 50 characters")
     private String codigoProducto;
 
@@ -58,10 +55,11 @@ public class CreateProductDto {
     @NotNull(message = "Fecha ingreso is required")
     private LocalDate fechaIngreso;
 
-    @NotNull(message = "Fecha caducidad is required")
     private LocalDate fechaCaducidad;
 
     private LocalDate reanalisis;
+
+    private LocalDate fechaMuestreo;
 
     @NotNull(message = "Número contenedores is required")
     @Positive(message = "Número contenedores must be positive")
@@ -81,8 +79,8 @@ public class CreateProductDto {
      */
     private Integer descuentos;
 
-    @NotNull(message = "Cantidad is required")
-    @Positive(message = "Cantidad must be positive")
-    private Integer cantidad;
+    //@NotNull(message = "Cantidad is required")
+    //@Positive(message = "Cantidad must be positive")
+    //private Integer cantidad;
 }
 
